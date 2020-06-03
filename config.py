@@ -17,8 +17,11 @@ img_size = 224
 initial_lr = 1e-3
 random_seed = 2626
 
-data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
 result_dir = 'results'
+data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
+train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_train_frontal_mt.tfrecord'
+valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_valid_frontal_mt.tfrecord'
+test_record = None
 
 # ------------------------------------------------------------------------------------------------------
 # Training configuration
@@ -69,3 +72,9 @@ desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flip
 # desc += '-uones';       dataset.map_functions.append('dataset.upolicy');           minval = 1;
 # desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing');   minval = 0;     maxval = .3;      
 desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
+
+# ------------------------------------------------------------------------------------------------------
+# Utility scripts
+
+# train = EasyDict(func='util_scripts.evaluate', run_id=0);   desc = 'evaluate'
+# train = EasyDict(func='util_scripts.ensemble', run_id=0);   desc = 'ensemble'
