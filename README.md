@@ -22,7 +22,7 @@
         │   config.txt -> training
         │   ...
 ```
-
+```
 .
 +-- _config.yml
 +-- _drafts
@@ -41,6 +41,7 @@
 |   +-- members.yml
 +-- _site
 +-- index.html
+```
 
 ## To Do list
 * Add a `README.md` in the experiment subfolder with information about the training 
