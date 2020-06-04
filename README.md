@@ -8,19 +8,19 @@
     results
     │ 
     └───experiment-subfolder1
-    │   └───README.md/txt -> training
-    │   └─── log.txt -> training
-    │   └─── config.txt -> training
-    │   └─── best_auc_model.h5/weights -> training
-    │   └─── best_loss_model.h5/weights -> training
-    │   └─── 0001_BivL2abNamingConvention.h5 -> training
-    │   └─── roc_curve.png -> util_scripts.evaluate_model
-    │   └─── metrics_on_evaluation.pkl -> util_scripts.evaluate_model
+    │   │   README.md/txt -> training
+    │   │   log.txt -> training
+    │   │   config.txt -> training
+    │   │   best_auc_model.h5/weights -> training
+    │   │   best_loss_model.h5/weights -> training
+    │   │   0001_BivL2abNamingConvention.h5 -> training
+    │   │   roc_curve.png -> util_scripts.evaluate_model
+    │   │   metrics_on_evaluation.pkl -> util_scripts.evaluate_model
     └───experiment-subfolder2
-        └─── README.md/txt -> training
-        └─── log.txt -> training
-        └─── config.txt -> training
-        └─── ...
+        │   README.md/txt -> training
+        │   log.txt -> training
+        │   config.txt -> training
+        │   ...
 ```
 
 ## To Do list
