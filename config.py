@@ -16,29 +16,29 @@ class_names = ['Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung Opacity', 'Ed
 
 result_dir = 'results'
 data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
-train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_train_frontal_mt.tfrecord'
-valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_valid_frontal_mt.tfrecord'
+train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/lateral_train.tfrecord'
+valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/lateral_valid.tfrecord'
 test_record = None
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Execution configuration
 
 env          = EasyDict(CUDA_VISIBLE_DEVICES='0')                                # Enviroment variables
-feature_dict = EasyDict(func='dataset.rx_chest14', n_diseases=len(class_names))  # Options for dataset func.
+feature_dict = EasyDict(func='dataset.rx_chexpert', n_diseases=len(class_names)) # Options for dataset func.
 train        = EasyDict(func='train.train_single_network')                       # Options for main training func.
-network      = Easydict()                                                        # Options for the network
-callbacks    = Easydict()                                                        # Callbacks options
+network      = EasyDict()                                                        # Options for the network
+callbacks    = EasyDict()                                                        # Callbacks options
 
-train.epochs = 5;   train.initial_lr = 1e-3   
+train.epochs = 25;   train.initial_lr = 1e-3;   train.verbose = 2
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose which network to use
 
-network.model_name = 'densenet121';             desc = 'densenet121';
-# network.model_name = 'densenet169';             desc = 'densenet169';
-# network.model_name = 'densenet201';             desc = 'densenet201';
-# network.model_name = 'inception_resnet_v2';     desc = 'inception_resnet_v2';
-# network.model_name = 'xception';                desc = 'xception';
+network.model_name = 'DenseNet121';             desc = 'densenet121';
+# network.model_name = 'DenseNet169';             desc = 'densenet169';
+# network.model_name = 'DenseNet201';             desc = 'densenet201';
+# network.model_name = 'InceptionResNetV2';       desc = 'inception_resnet_v2';
+# network.model_name = 'Xception';                desc = 'xception';
 
 network.input_shape = (224, 224, 3)
 network.n_classes = len(class_names)   
@@ -51,12 +51,14 @@ network.freeze = False
 
 # desc += '-rx_chest14';            dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chest14_tm';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-desc += '-rx_chexpert_f';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
+# desc += '-rx_chexpert_f';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_f_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_l';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_l_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_multi';     dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_multi_ct';  dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
+desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
+# desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Transformations

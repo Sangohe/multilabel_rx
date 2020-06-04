@@ -1,6 +1,8 @@
 import os
+import cv2
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 import utils
 import models
@@ -9,7 +11,7 @@ import dataset
 import callback
 
 
-def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=0):
+def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=1):
     """Trains a default tf.keras network only with the parent nodes from CheXpert"""
 
     # Make sure the result directory exists and is not none, raise exception if any
@@ -35,16 +37,16 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
     # Shuffle, batch and prefetch both datasets
     train_batches = (
         train_dataset.shuffle(config.dataset.shuffle, reshuffle_each_iteration=True)
-        .batch(config.dataset.batch)
+        .batch(config.dataset.batch_size)
         .prefetch(config.dataset.prefetch)
     )
 
     valid_batches = (
         valid_dataset.shuffle(config.dataset.shuffle, reshuffle_each_iteration=True)
-        .batch(config.dataset.batch)
+        .batch(config.dataset.batch_size)
         .prefetch(config.dataset.prefetch)
     )
-
+    
     # load the model and print summary
     model = models.multiclass_model(**config.network)
     model.summary()
@@ -71,7 +73,7 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
 
     if "reduce_lr_on_plateau" in config.callbacks:
         callbacks.append(
-            reduce_lr_on_plateau=tf.keras.callbacks.ReduceLROnPlateau(
+            tf.keras.callbacks.ReduceLROnPlateau(
                 **config.callbacks.reduce_lr_on_plateau
             )
         )
