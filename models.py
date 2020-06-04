@@ -4,11 +4,12 @@ import tensorflow as tf
 
 
 def multiclass_model(
-    name="DenseNet121",
+    model_name="DenseNet121",
     input_shape=(224, 224, 3),
     n_classes=14,
     use_base_weights=True,
     weights_path=None,
+    freeze=False,
 ):
     """
     returns a multiclass model using as the base model one
@@ -16,7 +17,7 @@ def multiclass_model(
     """
     base_weights = "imagenet" if use_base_weights else None
     base_model_class = getattr(
-        importlib.import_module("tensorflow.keras.applications"), name,
+        importlib.import_module("tensorflow.keras.applications"), model_name,
     )
     img_input = tf.keras.Input(shape=input_shape)
     base_model = base_model_class(
@@ -36,5 +37,9 @@ def multiclass_model(
     if weights_path is not None:
         print("Load model weights path: {}".format(weights_path))
         model.load_weights(weights_path)
+
+    if freeze:
+        for layer in model.layers[:-2]:
+            layer.trainable = False
 
     return model
