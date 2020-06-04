@@ -8,39 +8,19 @@
     results
     │ 
     └───experiment-subfolder1
-    │   │   README.md/txt -> training
-    │   │   log.txt -> training
-    │   │   config.txt -> training
-    │   │   best_auc_model.h5/weights -> training
-    │   │   best_loss_model.h5/weights -> training
-    │   │   0001_BivL2abNamingConvention.h5 -> training
-    │   │   roc_curve.png -> util_scripts.evaluate_model
-    │   │   metrics_on_evaluation.pkl -> util_scripts.evaluate_model
+    │   └───README.md/txt -> training
+    │   └─── log.txt -> training
+    │   └─── config.txt -> training
+    │   └─── best_auc_model.h5/weights -> training
+    │   └─── best_loss_model.h5/weights -> training
+    │   └─── 0001_BivL2abNamingConvention.h5 -> training
+    │   └─── roc_curve.png -> util_scripts.evaluate_model
+    │   └─── metrics_on_evaluation.pkl -> util_scripts.evaluate_model
     └───experiment-subfolder2
-        │   README.md/txt -> training
-        │   log.txt -> training
-        │   config.txt -> training
-        │   ...
-```
-```
-.
-+-- _config.yml
-+-- _drafts
-|   +-- begin-with-the-crazy-ideas.textile
-|   +-- on-simplicity-in-technology.markdown
-+-- _includes
-|   +-- footer.html
-|   +-- header.html
-+-- _layouts
-|   +-- default.html
-|   +-- post.html
-+-- _posts
-|   +-- 2007-10-29-why-every-programmer-should-play-nethack.textile
-|   +-- 2009-04-26-barcamp-boston-4-roundup.textile
-+-- _data
-|   +-- members.yml
-+-- _site
-+-- index.html
+        └─── README.md/txt -> training
+        └─── log.txt -> training
+        └─── config.txt -> training
+        └─── ...
 ```
 
 ## To Do list
