@@ -57,7 +57,9 @@ def scale_0(image, label):
     """Takes and image and scale its values between [0, 1]"""
     image = tf.cast(image, tf.float32)
     image = image / 255.0
-    image = tf.image.resize(image, [config.IMG_SIZE, config.IMG_SIZE])
+    image = tf.image.resize(
+        image, [config.network.input_shape[0], config.network.input_shape[0]]
+    )
     return image, tf.cast(label, tf.float32)
 
 
@@ -65,7 +67,9 @@ def scale_minus1_1(image, label):
     """Takes an image and scale its values between [-1, 1]"""
     image = tf.cast(image, tf.float32)
     image = (image / 127.5) - 1
-    image = tf.image.resize(image, [config.IMG_SIZE, config.IMG_SIZE])
+    image = tf.image.resize(
+        image, [config.network.input_shape[0], config.network.input_shape[0]]
+    )
 
     return image, tf.cast(label, tf.float32)
 
@@ -80,7 +84,9 @@ def scale_imagenet(image, label):
 
     image = tf.cast(image, tf.float32)
     image = image / 255.0
-    image = tf.image.resize(image, [config.IMG_SIZE, config.IMG_SIZE])
+    image = tf.image.resize(
+        image, [config.network.input_shape[0], config.network.input_shape[0]]
+    )
     image = (image - imagenet_mean) / imagenet_std
 
     return image, tf.cast(label, tf.float32)
