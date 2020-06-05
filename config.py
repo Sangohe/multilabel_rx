@@ -57,8 +57,8 @@ network.freeze = False
 # desc += '-rx_chexpert_l_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_multi';     dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_multi_ct';  dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
+# desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
+desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Transformations
@@ -91,5 +91,5 @@ callbacks.multiple_class_auroc      = EasyDict(class_names=class_names, stats=No
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-train = EasyDict(func='util_scripts.evaluate_single_network', run_id=0, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
+train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
 # train = EasyDict(func='util_scripts.ensemble', run_id=0)
