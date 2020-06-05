@@ -35,6 +35,7 @@ def evaluate_single_network(
     else:
         log_file = os.path.join(result_subdir, "evaluation_log.txt")
     print("Logging output to {}".format(log_file))
+    utils.set_output_log_file(log_file)
 
     print("\nLoading the model best AUC model...")
     model = tf.keras.models.load_model(os.path.join(result_subdir, "best_auc_model.h5"))
