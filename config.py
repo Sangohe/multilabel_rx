@@ -65,20 +65,35 @@ desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024,
 
 # Always keep these two functions uncommented
 dataset.map_functions.append('dataset.from_bytes_to_dict')
-dataset.map_functions.append('dataset.extract_data_from_dict')
+# dataset.map_functions.append('dataset.extract_data_from_dict') # single view
+dataset.map_functions.append('dataset.extract_data_from_dict_multiview') # multiview
 
+# Single view mapping functions
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0')
 # desc += '-scale_1';        dataset.map_functions.append('dataset.scale_minus1_1')
-desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
-desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
+# desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
+# desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
+
+# Multiview mapping functions
+# desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0_multiview')
+# desc += '-scale_1';        dataset.map_functions.append('dataset.scale_minus1_1_multiview')
+desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet_multiview')
+desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug_multiview')
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose one policy
 
+# Single view mapping functions
 # desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy');           minval = 0;
 # desc += '-uones';       dataset.map_functions.append('dataset.upolicy');           minval = 1;
 # desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing');   minval = 0;     maxval = .3;      
-desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
+# desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
+
+# Multiview mapping functions
+# desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy_multiview');           minval = 0;
+# desc += '-uones';       dataset.map_functions.append('dataset.upolicy_multiview');           minval = 1;
+# desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = 0;     maxval = .3;      
+desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = .55;   maxval = .85;
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose callbacks
@@ -91,5 +106,5 @@ callbacks.multiple_class_auroc      = EasyDict(class_names=class_names, stats=No
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
-# train = EasyDict(func='util_scripts.ensemble', run_id=0)
+# train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
+train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
