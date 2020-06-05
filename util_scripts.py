@@ -26,7 +26,7 @@ def evaluate_single_network(
         "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
         "precision": tf.keras.metrics.Precision(name="precision"),
         "recall": tf.keras.metrics.Recall(name="recall"),
-        "f1": tfa.metrics.F1Score(name="f1_score"),
+        "f1": tfa.metrics.F1Score(num_classes=len(class_names), name="f1_score"),
     }
 
     result_subdir = utils.locate_result_subdir(run_id)
