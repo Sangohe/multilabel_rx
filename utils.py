@@ -207,10 +207,11 @@ class HistoryPlotter(object):
 
             train_value = history.history[metric]
             val_value = history.history["val_" + metric]
+            
             if smoothing_std is not None:
                 train_value = _smooth(train_value, std=smoothing_std)
                 val_value = _smooth(val_value, std=smoothing_std)
-
+            
             plt.plot(
                 history.epoch, train_value, color=color, label=name.title() + " Train"
             )
@@ -226,4 +227,5 @@ class HistoryPlotter(object):
         plt.grid(True)
         if self.result_subdir is not None:
             plt.savefig(os.path.join(self.result_subdir, "metrics_on_training.png"))
+            print("\nSaving metric's plot in {}".format(os.path.join(self.result_subdir, "metrics_on_training.png")))
 

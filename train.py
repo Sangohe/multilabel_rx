@@ -48,6 +48,7 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
     )
 
     # load the model and print summary
+    print("Loading the model...\n")
     model = models.multiclass_model(**config.network)
     model.summary()
 
@@ -96,7 +97,8 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
         )
 
     # train
-    history = model.fit(
+    history = {}
+    history[config.network.model_name] = model.fit(
         train_batches,
         epochs=epochs,
         validation_data=valid_batches,
@@ -106,9 +108,13 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
 
     # graph metrics
     plotter = utils.HistoryPlotter(
-        metric="loss", result_subdir=result_subdir, smoothing_std=10
+        metric="loss", result_subdir=result_subdir
     )
-    plotter.plot(history)
+    
+    try:
+        plotter.plot(history)
+    except:
+        print("Error. Could not save metric's plot")
 
 
 if __name__ == "__main__":
@@ -120,4 +126,4 @@ if __name__ == "__main__":
     print("Running %s()..." % config.train["func"])
     result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
     utils.call_func_by_name(result_subdir=result_subdir, **config.train)
-    print("Ending execution...")
+    print("\nEnding execution...")

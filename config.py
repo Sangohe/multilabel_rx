@@ -23,13 +23,13 @@ test_record = None
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Execution configuration
 
-env          = EasyDict(CUDA_VISIBLE_DEVICES='1')                                # Enviroment variables
+env          = EasyDict(CUDA_VISIBLE_DEVICES='0')                                # Enviroment variables
 feature_dict = EasyDict(func='dataset.rx_chexpert', n_diseases=len(class_names)) # Options for dataset func.
 train        = EasyDict(func='train.train_single_network')                       # Options for main training func.
 network      = EasyDict()                                                        # Options for the network
 callbacks    = EasyDict()                                                        # Callbacks options
 
-train.epochs = 25;   train.initial_lr = 1e-3;   train.verbose = 2
+train.epochs = 50;   train.initial_lr = 1e-3;   train.verbose = 2
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose which network to use

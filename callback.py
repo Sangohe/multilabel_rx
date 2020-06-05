@@ -38,35 +38,36 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         Calculate the average AUROC and save the best model weights according
         to this metric.
         """
-        print("\n-----------------------------------------------------")
         self.stats["lr"] = float(kb.eval(self.model.optimizer.lr))
-        print(f"current learning rate: {self.stats['lr']}")
-
+        print("\n--------------------------------------------------------")
+        print("Epoch #{} Validation AUROC. Current Lr: {:.9f}".format(epoch + 1, self.stats["lr"]))
+        print("--------------------------------------------------------")
+        
         data = list(self.dataset.unbatch().as_numpy_iterator())
         x = np.asarray([element[0] for element in data])
         y = np.asarray([element[1] for element in data])
-        print(y.shape)
 
         y_hat = self.model.predict(x)
 
-        print(f"*** epoch#{epoch + 1} validation auroc ***")
         current_auroc = []
         for i in range(len(self.class_names)):
-#             try:
-            score = roc_auc_score(y[:, i], y_hat[:, i])
-#             except ValueError:
-#                 score = 0
+            try:
+                score = roc_auc_score(y[:, i], y_hat[:, i])
+            except ValueError:
+                score = 0
             self.aurocs[self.class_names[i]].append(score)
             current_auroc.append(score)
-            print(f"{i+1}. {self.class_names[i]}: {score}")
-        print("-----------------------------------------------------")
+            print("{:02d}. {:26s} -> {:>8}".format(i+1, self.class_names[i], score))
+        
+        mean_auroc = np.mean(current_auroc)
+        print("--------------------------------------------------------")
+        print("MEAN AUROC: {:>40}".format(mean_auroc))
+        print("--------------------------------------------------------\n")
 
         # customize your multiple class metrics here
-        mean_auroc = np.mean(current_auroc)
-        print(f"mean auroc: {mean_auroc}")
         if mean_auroc > self.stats["best_mean_auroc"]:
             print(
-                "Update best AUROC from {} to {}. Saving model to {}".format(
+                "Update best AUROC from {} to {}. Saving model to:\n{}\n".format(
                     self.stats["best_mean_auroc"], mean_auroc, self.save_model_path
                 )
             )
