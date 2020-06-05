@@ -16,14 +16,14 @@ class_names = ['Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung Opacity', 'Ed
 
 result_dir = 'results'
 data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
-train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/lateral_train.tfrecord'
-valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/lateral_valid.tfrecord'
+train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_train.tfrecord'
+valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_valid.tfrecord'
 test_record = None
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Execution configuration
 
-env          = EasyDict(CUDA_VISIBLE_DEVICES='0')                                # Enviroment variables
+env          = EasyDict(CUDA_VISIBLE_DEVICES='1')                                # Enviroment variables
 feature_dict = EasyDict(func='dataset.rx_chexpert', n_diseases=len(class_names)) # Options for dataset func.
 train        = EasyDict(func='train.train_single_network')                       # Options for main training func.
 network      = EasyDict()                                                        # Options for the network

@@ -45,16 +45,17 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         data = list(self.dataset.unbatch().as_numpy_iterator())
         x = np.asarray([element[0] for element in data])
         y = np.asarray([element[1] for element in data])
+        print(y.shape)
 
         y_hat = self.model.predict(x)
 
         print(f"*** epoch#{epoch + 1} validation auroc ***")
         current_auroc = []
         for i in range(len(self.class_names)):
-            try:
-                score = roc_auc_score(y[:, i], y_hat[:, i])
-            except ValueError:
-                score = 0
+#             try:
+            score = roc_auc_score(y[:, i], y_hat[:, i])
+#             except ValueError:
+#                 score = 0
             self.aurocs[self.class_names[i]].append(score)
             current_auroc.append(score)
             print(f"{i+1}. {self.class_names[i]}: {score}")

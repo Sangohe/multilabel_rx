@@ -106,9 +106,9 @@ def upolicy(image, label):
     return (
         image,
         tf.where(
-            label == -1,
-            tf.constant(config.minval, dtype=tf.int64),
-            tf.cast(label, dtype=tf.int64),
+            label == -1.0,
+            tf.constant(config.minval, dtype=tf.float32),
+            tf.cast(label, dtype=tf.float32),
         ),
     )
 
@@ -121,7 +121,7 @@ def label_smoothing(image, label):
     return (
         image,
         tf.where(
-            label == -1,
+            label == -1.0,
             tf.random.uniform(
                 [], minval=config.minval, maxval=config.maxval, dtype=tf.float32
             ),
