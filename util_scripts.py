@@ -64,7 +64,7 @@ def evaluate_single_network(
         metrics=compile_metrics,
     )
 
-    evaluation_metrics = model.evaluate(test_batches)
+    evaluation_metrics = model.evaluate(test_batches, verbose=2)
     eval_metrics = {
         key: (value * 100)
         for (key, value) in zip(metrics, ["loss"] + list(evaluation_metrics))
