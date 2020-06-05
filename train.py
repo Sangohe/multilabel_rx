@@ -33,7 +33,7 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
     # Apply the stack of transformations uncommented in config.py
     train_dataset = dataset.map_functions(train_dataset, config.dataset.map_functions)
     valid_dataset = dataset.map_functions(valid_dataset, config.dataset.map_functions)
-    
+
     # Shuffle, batch and prefetch both datasets
     train_batches = (
         train_dataset.shuffle(config.dataset.shuffle, reshuffle_each_iteration=True)
@@ -46,7 +46,7 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
         .batch(config.dataset.batch_size)
         .prefetch(config.dataset.prefetch)
     )
-    
+
     # load the model and print summary
     model = models.multiclass_model(**config.network)
     model.summary()
@@ -103,6 +103,12 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
         callbacks=callbacks,
         verbose=verbose,
     )
+
+    # graph metrics
+    plotter = utils.HistoryPlotter(
+        metric="loss", result_subdir=result_subdir, smoothing_std=10
+    )
+    plotter.plot(history)
 
 
 if __name__ == "__main__":
