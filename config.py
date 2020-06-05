@@ -1,4 +1,4 @@
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Convenience class that behaves exactly like dict(), but allows accessing
 # the keys and values using the attribute syntax, i.e., 'mydict.key = value'.
 
@@ -8,7 +8,7 @@ class EasyDict(dict):
     def __setattr__(self, name, value): self[name] = value
     def __delattr__(self, name): del self[name]
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Class names and paths
 
 random_seed = 2626
@@ -18,9 +18,9 @@ result_dir = 'results'
 data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
 train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_train.tfrecord'
 valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_valid.tfrecord'
-test_record = None
+test_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_test.tfrecord'
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Execution configuration
 
 env          = EasyDict(CUDA_VISIBLE_DEVICES='0')                                # Enviroment variables
@@ -31,7 +31,7 @@ callbacks    = EasyDict()                                                       
 
 train.epochs = 50;   train.initial_lr = 1e-3;   train.verbose = 2
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose which network to use
 
 network.model_name = 'DenseNet121';             desc = 'densenet121';
@@ -45,7 +45,7 @@ network.n_classes = len(class_names)
 network.weights_path = None
 network.freeze = False
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Dataset (choose one)
 # f: frontal, l: lateral, multi: multiview, tm: template matched, ct: contidional training
 
@@ -60,7 +60,7 @@ network.freeze = False
 desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
 # desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Transformations
 
 # Always keep these two functions uncommented
@@ -72,7 +72,7 @@ dataset.map_functions.append('dataset.extract_data_from_dict')
 desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
 desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose one policy
 
 # desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy');           minval = 0;
@@ -80,7 +80,7 @@ desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flip
 # desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing');   minval = 0;     maxval = .3;      
 desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose callbacks
 
 # callbacks.decay_lr_after_epoch      = EasyDict(func='callbacks.decay_lr_on_epoch_end', verbose=1)
@@ -88,8 +88,8 @@ callbacks.reduce_lr_on_plateau      = EasyDict(monitor="val_loss", factor=0.1, p
 callbacks.model_checkpoint_callback = EasyDict(save_weights_only=False, monitor="val_loss", mode="min", save_best_only=True)
 callbacks.multiple_class_auroc      = EasyDict(class_names=class_names, stats=None)
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-# train = EasyDict(func='util_scripts.evaluate', run_id=0);   desc = 'evaluate'
-# train = EasyDict(func='util_scripts.ensemble', run_id=0);   desc = 'ensemble'
+train = EasyDict(func='util_scripts.evaluate_single_network', run_id=0, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
+# train = EasyDict(func='util_scripts.ensemble', run_id=0)
