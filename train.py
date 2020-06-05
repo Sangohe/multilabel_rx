@@ -107,10 +107,8 @@ def train_single_network(result_subdir=None, epochs=5, initial_lr=1e-3, verbose=
     )
 
     # graph metrics
-    plotter = utils.HistoryPlotter(
-        metric="loss", result_subdir=result_subdir
-    )
-    
+    plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
+
     try:
         plotter.plot(history)
     except:

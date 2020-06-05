@@ -40,9 +40,13 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         """
         self.stats["lr"] = float(kb.eval(self.model.optimizer.lr))
         print("\n--------------------------------------------------------")
-        print("Epoch #{} Validation AUROC. Current Lr: {:.9f}".format(epoch + 1, self.stats["lr"]))
+        print(
+            "Epoch #{} Validation AUROC. Current Lr: {:.9f}".format(
+                epoch + 1, self.stats["lr"]
+            )
+        )
         print("--------------------------------------------------------")
-        
+
         data = list(self.dataset.unbatch().as_numpy_iterator())
         x = np.asarray([element[0] for element in data])
         y = np.asarray([element[1] for element in data])
@@ -57,8 +61,8 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
                 score = 0
             self.aurocs[self.class_names[i]].append(score)
             current_auroc.append(score)
-            print("{:02d}. {:26s} -> {:>8}".format(i+1, self.class_names[i], score))
-        
+            print("{:02d}. {:26s} -> {:>8}".format(i + 1, self.class_names[i], score))
+
         mean_auroc = np.mean(current_auroc)
         print("--------------------------------------------------------")
         print("MEAN AUROC: {:>40}".format(mean_auroc))
