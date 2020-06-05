@@ -153,12 +153,14 @@ def evaluate_late_fusion_ensemble(
     first_model = tf.keras.models.load_model(
         os.path.join(first_subdir, "best_auc_model.h5")
     )
+    first_model.input.name = "first_model_input"
 
     # model 2
     second_subdir = utils.locate_result_subdir(second_exp_id)
     second_model = tf.keras.models.load_model(
         os.path.join(second_subdir, "best_auc_model.h5")
     )
+    second_model.input.name = "second_model_input"
 
     average_layer = tf.keras.layers.Average()([first_model.output, second_model.output])
 
