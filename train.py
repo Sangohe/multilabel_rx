@@ -163,14 +163,21 @@ def evaluate_single_network(
     )
 
     # evaluate metrics
+    compile_metrics = [metrics_class_names[m] for m in metrics]
+    model.compile(
+        optimizer="Adam",
+        loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+        metrics=compile_metrics,
+    )
+
     evaluation_metrics = model.evaluate(test_batches)
-    metrics = {
+    eval_metrics = {
         key: (round(value, 2) * 100)
         for (key, value) in zip(metrics, ["loss"] + list(evaluation_metrics))
     }
 
     # append auc score
-    metrics["auc"] = {}
+    eval_metrics["auc"] = {}
     data = list(test_dataset.as_numpy_iterator())
     x = np.asarray([element[0] for element in data])
     y = np.asarray([element[1] for element in data])
@@ -186,12 +193,12 @@ def evaluate_single_network(
             score = roc_auc_score(y[:, i], y_hat[:, i])
         except ValueError:
             score = 0
-        metrics["auc"][class_names[i]] = round(score, 2) * 100
+        eval_metrics["auc"][class_names[i]] = round(score, 2) * 100
         current_auroc.append(score)
         print("{:02d}. {:26s} -> {:>8}".format(i + 1, class_names[i], score))
 
     mean_auroc = np.mean(current_auroc)
-    metrics["auc"]["mean"] = round(mean_auroc, 2) * 100
+    eval_metrics["auc"]["mean"] = round(mean_auroc, 2) * 100
     print("--------------------------------------------------------")
     print("MEAN AUROC: {:>40}".format(mean_auroc))
     print("--------------------------------------------------------\n")
@@ -200,7 +207,7 @@ def evaluate_single_network(
     pickle_path = os.path.join(result_subdir, "metrics_on_evaluation.pkl")
     print("Saving metrics to {}".format(pickle_path))
     with open(pickle_path, "wb") as handle:
-        pickle.dump(metrics, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(eval_metrics, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
