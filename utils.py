@@ -82,6 +82,40 @@ def create_result_subdir(result_dir, desc):
     return result_subdir
 
 
+def locate_result_subdir(run_id_or_result_subdir):
+    if isinstance(run_id_or_result_subdir, str) and os.path.isdir(
+        run_id_or_result_subdir
+    ):
+        return run_id_or_result_subdir
+
+    searchdirs = []
+    searchdirs += [""]
+    searchdirs += ["results"]
+    searchdirs += ["networks"]
+
+    for searchdir in searchdirs:
+        dir = (
+            config.result_dir
+            if searchdir == ""
+            else os.path.join(config.result_dir, searchdir)
+        )
+        dir = os.path.join(dir, str(run_id_or_result_subdir))
+        if os.path.isdir(dir):
+            return dir
+        prefix = (
+            "%03d" % run_id_or_result_subdir
+            if isinstance(run_id_or_result_subdir, int)
+            else str(run_id_or_result_subdir)
+        )
+        dirs = sorted(
+            glob.glob(os.path.join(config.result_dir, searchdir, prefix + "-*"))
+        )
+        dirs = [dir for dir in dirs if os.path.isdir(dir)]
+        if len(dirs) == 1:
+            return dirs[0]
+    raise IOError("Cannot locate result subdir for run", run_id_or_result_subdir)
+
+
 # ------------------------------------------------------------------------------------------------------
 # Logging of stdout and stderr to a file.
 
@@ -232,4 +266,3 @@ class HistoryPlotter(object):
                     os.path.join(self.result_subdir, "metrics_on_training.png")
                 )
             )
-
