@@ -37,10 +37,10 @@ def evaluate_single_network(
     print("Logging output to {}".format(log_file))
     utils.set_output_log_file(log_file)
 
-    print("\nLoading the model best AUC model...")
+    print("Loading the best AUC model for this experiment...")
     model = tf.keras.models.load_model(os.path.join(result_subdir, "best_auc_model.h5"))
 
-    print("\nUsing the {} record to evaluate".format(test_record))
+    print("Using the {} record to evaluate\n".format(test_record))
     if config.train_record is not None:
         test_dataset = tf.data.TFRecordDataset(test_record)
     else:
@@ -66,9 +66,11 @@ def evaluate_single_network(
 
     evaluation_metrics = model.evaluate(test_batches, verbose=2)
     eval_metrics = {
-        key: (value * 100)
-        for (key, value) in zip(metrics, ["loss"] + list(evaluation_metrics))
+        key: (round(value * 100, 2))
+        for (key, value) in zip(["loss"] + metrics, list(evaluation_metrics))
     }
+
+    eval_metrics["loss"] = eval_metrics["loss"] / 100.0
 
     # append auc score
     eval_metrics["auc"] = {}
@@ -82,6 +84,9 @@ def evaluate_single_network(
         class_names = ["Class {}".format(i) for i in range(y.shape[1])]
 
     current_auroc = []
+    print("\n--------------------------------------------------------")
+    print("AUROC Score Evaluation for each class in the dataset ")
+    print("--------------------------------------------------------")
     for i in range(len(class_names)):
         try:
             score = roc_auc_score(y[:, i], y_hat[:, i])
