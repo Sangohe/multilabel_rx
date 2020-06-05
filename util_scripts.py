@@ -153,20 +153,20 @@ def evaluate_late_fusion_ensemble(
     first_model = tf.keras.models.load_model(
         os.path.join(first_subdir, "best_auc_model.h5")
     )
-    first_model.input.name = "first_model_input"
+    first_input = tf.keras.Input(shape=(224, 224, 3))
+    in1 = first_model(first_input)
 
     # model 2
     second_subdir = utils.locate_result_subdir(second_exp_id)
     second_model = tf.keras.models.load_model(
         os.path.join(second_subdir, "best_auc_model.h5")
     )
-    second_model.input.name = "second_model_input"
+    second_input = tf.keras.Input(shape=(224, 224, 3))
+    in2 = second_model(second_input)
 
     average_layer = tf.keras.layers.Average()([first_model.output, second_model.output])
 
-    ensemble = tf.keras.Model(
-        inputs=[first_model.input, second_model.input], outputs=average_layer
-    )
+    ensemble = tf.keras.Model(inputs=[in1, in2], outputs=average_layer)
 
     # evaluate metrics
     compile_metrics = [metrics_class_names[m] for m in metrics]
