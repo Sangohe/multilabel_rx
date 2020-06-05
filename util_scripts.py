@@ -72,7 +72,7 @@ def evaluate_single_network(
         for (key, value) in zip(["loss"] + metrics, list(evaluation_metrics))
     }
 
-    eval_metrics["loss"] = eval_metrics["loss"] / 100.0
+    eval_metrics["loss"] = round(eval_metrics["loss"] / 100.0, 2)
 
     # append auc score
     eval_metrics["auc"] = {}
