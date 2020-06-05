@@ -39,7 +39,6 @@ def evaluate_single_network(
 
     print("\nLoading the model best AUC model...")
     model = tf.keras.models.load_model(os.path.join(result_subdir, "best_auc_model.h5"))
-    model.summary()
 
     print("\nUsing the {} record to evaluate".format(test_record))
     if config.train_record is not None:
@@ -67,7 +66,7 @@ def evaluate_single_network(
 
     evaluation_metrics = model.evaluate(test_batches)
     eval_metrics = {
-        key: (round(value, 2) * 100)
+        key: (value * 100)
         for (key, value) in zip(metrics, ["loss"] + list(evaluation_metrics))
     }
 
