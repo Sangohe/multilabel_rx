@@ -148,7 +148,7 @@ def label_smoothing(image, label):
 
 
 def extract_data_from_dict_multiview(example_dict):
-    """Takes an example dictionary and returns an image with its corresponding labels"""
+    """Takes an example dictionary and returns a tuple of images with its corresponding labels"""
     frontal_image = tf.io.decode_raw(example_dict["img_frontal"], tf.uint8)
     frontal_image = tf.reshape(
         frontal_image,
@@ -161,18 +161,18 @@ def extract_data_from_dict_multiview(example_dict):
         (example_dict["height"], example_dict["width"], example_dict["channels"]),
     )
 
-    return frontal_image, lateral_image, example_dict["diseases"]
+    return (frontal_image, lateral_image), example_dict["diseases"]
 
 
-def scale_0_multiview(frontal_image, lateral_image, label):
-    """Takes and image and scale its values between [0, 1]"""
-    frontal_image = tf.cast(frontal_image, tf.float32)
+def scale_0_multiview(images, label):
+    """Takes a tuple of images and scale its values between [0, 1]"""
+    frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = frontal_image / 255.0
     frontal_image = tf.image.resize(
         frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
     )
 
-    lateral_image = tf.cast(lateral_image, tf.float32)
+    lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = lateral_image / 255.0
     lateral_image = tf.image.resize(
         lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
@@ -180,15 +180,15 @@ def scale_0_multiview(frontal_image, lateral_image, label):
     return frontal_image, lateral_image, tf.cast(label, tf.float32)
 
 
-def scale_minus1_1_multiview(frontal_image, lateral_image, label):
-    """Takes an image and scale its values between [-1, 1]"""
-    frontal_image = tf.cast(frontal_image, tf.float32)
+def scale_minus1_1_multiview(images, label):
+    """Takes a tuple of images and scale its values between [-1, 1]"""
+    frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = (frontal_image / 127.5) - 1
     frontal_image = tf.image.resize(
         frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
     )
 
-    lateral_image = tf.cast(lateral_image, tf.float32)
+    lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = (lateral_image / 127.5) - 1
     lateral_image = tf.image.resize(
         lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
@@ -197,46 +197,45 @@ def scale_minus1_1_multiview(frontal_image, lateral_image, label):
     return frontal_image, lateral_image, tf.cast(label, tf.float32)
 
 
-def scale_imagenet_multiview(frontal_image, lateral_image, label):
+def scale_imagenet_multiview(images, label):
     """
-    Takes an image and scale its values using the Imagenet dataset mean and 
+    Takes a tuple of images and scale its values using the Imagenet dataset mean and 
     standard deviation
     """
     imagenet_mean = tf.constant([0.485, 0.456, 0.406])
     imagenet_std = tf.constant([0.229, 0.224, 0.225])
 
-    frontal_image = tf.cast(frontal_image, tf.float32)
+    frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = frontal_image / 255.0
     frontal_image = tf.image.resize(
         frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
     )
     frontal_image = (frontal_image - imagenet_mean) / imagenet_std
 
-    lateral_image = tf.cast(lateral_image, tf.float32)
+    lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = lateral_image / 255.0
     lateral_image = tf.image.resize(
         lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
     )
     lateral_image = (lateral_image - imagenet_mean) / imagenet_std
 
-    return frontal_image, lateral_image, tf.cast(label, tf.float32)
+    return (frontal_image, lateral_image), tf.cast(label, tf.float32)
 
 
-def horizontal_flipping_aug_multiview(frontal_image, lateral_image, label):
-    """Applies a random horizontal flipping to the image"""
-    frontal_image = tf.image.random_flip_left_right(frontal_image)
-    lateral_image = tf.image.random_flip_left_right(lateral_image)
-    return frontal_image, lateral_image, label
+def horizontal_flipping_aug_multiview(images, label):
+    """Applies a random horizontal flipping to the tuple of images"""
+    frontal_image = tf.image.random_flip_left_right(images[0])
+    lateral_image = tf.image.random_flip_left_right(images[1])
+    return (frontal_image, lateral_image), label
 
 
-def upolicy_multiview(frontal_image, lateral_image, label):
+def upolicy_multiview(images, label):
     """
     Takes a vector of labels and maps all values equal to -1 to
     0 or 1, depending on the chosen policy in config
     """
     return (
-        frontal_image,
-        lateral_image,
+        images,
         tf.where(
             label == -1.0,
             tf.constant(config.minval, dtype=tf.float32),
@@ -245,14 +244,13 @@ def upolicy_multiview(frontal_image, lateral_image, label):
     )
 
 
-def label_smoothing_multiview(frontal_image, lateral_image, label):
+def label_smoothing_multiview(images, label):
     """
     Takes a label value of -1 and maps it into a [minval, maxval] 
     depending on the chosen policy in config
     """
     return (
-        frontal_image,
-        lateral_image,
+        images,
         tf.where(
             label == -1.0,
             tf.random.uniform(
