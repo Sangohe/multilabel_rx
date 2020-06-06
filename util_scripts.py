@@ -148,30 +148,37 @@ def evaluate_late_fusion_ensemble(
         .prefetch(config.dataset.prefetch)
     )
 
-    # model 1
+    # Load the trained models and give names to the model
+    # itself and all their layers to avoid errors.
     first_subdir = utils.locate_result_subdir(first_exp_id)
     first_model = tf.keras.models.load_model(
         os.path.join(first_subdir, "best_auc_model.h5")
     )
-    first_input = tf.keras.Input(shape=(224, 224, 3))
-    in1 = first_model(first_input)
+    first_model._name = "first_model"
+    for layer in first_model.layers:
+        layer._name = "first_model_" + layer.name
 
-    # model 2
     second_subdir = utils.locate_result_subdir(second_exp_id)
     second_model = tf.keras.models.load_model(
         os.path.join(second_subdir, "best_auc_model.h5")
     )
-    second_input = tf.keras.Input(shape=(224, 224, 3))
-    in2 = second_model(second_input)
+    second_model._name = "second_model"
+    for layer in second_model.layers:
+        layer._name = "second_model_" + layer.name
 
-    average_layer = tf.keras.layers.Average()([first_model.output, second_model.output])
+    # Create a layer that will average both predictions
+    average_layer = tf.keras.layers.Average(name="average_layer")(
+        [first_model.output, second_model.output]
+    )
 
-    ensemble = tf.keras.Model(inputs=[in1, in2], outputs=average_layer)
+    # Create the ensemble
+    ensemble = tf.keras.Model(
+        inputs=[first_model.input, second_model.input], outputs=[average_layer]
+    )
 
     # evaluate metrics
     compile_metrics = [metrics_class_names[m] for m in metrics]
     ensemble.compile(
-        optimizer="Adam",
         loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
         metrics=compile_metrics,
     )
@@ -187,11 +194,10 @@ def evaluate_late_fusion_ensemble(
     # append auc score
     eval_metrics["auc"] = {}
     data = list(test_dataset.as_numpy_iterator())
-    x1 = np.asarray([element[0] for element in data])
-    x2 = np.asarray([element[1] for element in data])
-    y = np.asarray([element[2] for element in data])
+    x = np.asarray([element[0] for element in data])
+    y = np.asarray([element[1] for element in data])
 
-    y_hat = ensemble.predict([x1, x2])
+    y_hat = ensemble.predict(x)
 
     if class_names is None:
         class_names = ["Class {}".format(i) for i in range(y.shape[1])]
@@ -220,3 +226,7 @@ def evaluate_late_fusion_ensemble(
     print("Saving metrics to {}".format(pickle_path))
     with open(pickle_path, "wb") as handle:
         pickle.dump(eval_metrics, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    model_path = os.path.join(result_subdir, "ensemble.h5")
+    print("Saving model to {}".format(model_path))
+    ensemble.save(model_path)
