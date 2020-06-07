@@ -11,8 +11,18 @@ import dataset
 import callback
 
 
-def train_single_network(epochs=5, initial_lr=1e-3, verbose=1):
-    """Trains a default tf.keras network only with the parent nodes from CheXpert"""
+def train_single_network(epochs=5, initial_lr=1e-3, verbose=2):
+    """Trains a default tf.keras.applications network using the data
+    from the train and validation TfRecords.
+
+    Args:
+        epochs (int): Number of epochs to train. Defaults to 5.
+        initial_lr (float): Initial learning rate. Defaults to 1e-3.
+        verbose (int): Verbosity for the train process. Defaults to 2.
+
+    Raises:
+        Exception: If the train or validation TfRecords do not exist
+    """
 
     # Create result subdirectory to store the experiment results
     result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
@@ -111,6 +121,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=1):
         plotter.plot(history)
     except:
         print("Error. Could not save metric's plot")
+
 
 if __name__ == "__main__":
     utils.init_output_logging()
