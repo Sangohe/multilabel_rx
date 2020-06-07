@@ -106,5 +106,5 @@ callbacks.multiple_class_auroc      = EasyDict(class_names=class_names, stats=No
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-# train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
-train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, metrics=['acc', 'precision', 'recall', 'f1'])
+# train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names)
+train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
