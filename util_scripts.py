@@ -194,10 +194,11 @@ def evaluate_late_fusion_ensemble(
     # append auc score
     eval_metrics["auc"] = {}
     data = list(test_dataset.as_numpy_iterator())
-    x = np.asarray([element[0] for element in data])
+    x1 = np.asarray([element[0][0] for element in data])
+    x2 = np.asarray([element[0][1] for element in data])
     y = np.asarray([element[1] for element in data])
 
-    y_hat = ensemble.predict(x)
+    y_hat = ensemble.predict([x1, x2])
 
     if class_names is None:
         class_names = ["Class {}".format(i) for i in range(y.shape[1])]
