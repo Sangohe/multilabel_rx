@@ -11,15 +11,22 @@ import dataset
 
 
 def evaluate_single_network(
-    run_id, test_record=None, class_names=None, metrics=None, log=None
+    run_id, test_record=None, class_names=None, metrics=None, log=None,
 ):
-    """
-    1. Locate the result_subdir using the run_id
-    2. Load the test dataset using test_record. Make sure to apply the 
-    same transformations read config.txt file in the result_subdir
-    3. Feedforward the test dataset and compare the predictions to 
-    the ground truth labels
-    4. Create a dictionary for the metrics and save it as pickle
+    """Takes a single experiment id to locate the result subdirectory and
+    load the model with the best AUC score for that experiment. Then, the
+    model will be tested using the data from the test TfRecord and the
+    final metrics will be stored in a pickle.
+
+    Args:
+        run_id (int or str): experiment id
+        test_record (str): Path to evaluation TfRecord. Defaults to None.
+        class_names (list): Ordered list of class names. Defaults to None.
+        metrics (list): List of metrics to evaluate. Defaults to None.
+        log (str, optional): Filename to write the log. Defaults to None.
+
+    Raises:
+        Exception: If the evaluation TfRecord does not exist
     """
 
     metrics_class_names = {
@@ -59,6 +66,8 @@ def evaluate_single_network(
     )
 
     # evaluate metrics
+    if metrics is None:
+        metrics = ["acc", "precision", "recall", "f1"]
     compile_metrics = [metrics_class_names[m] for m in metrics]
     model.compile(
         optimizer="Adam",
@@ -118,8 +127,30 @@ def evaluate_late_fusion_ensemble(
     class_names=None,
     metrics=None,
     log=None,
+    use_weighted_average=False,
+    valid_record=None,
 ):
-    """Takes two models and makes an ensemble"""
+    """Takes two experiment ids, locate both result subdirectories and load
+    the model with the best AUC score from each subdirectory to make an
+    ensemble. The ensemble can be done either with a normal Average Layer
+    or a WeightedAverage Layer. If the WeightedAverage Layer is chosen, 
+    the path to the validation TfRecord must be given to adjust the weights.
+    At the end, the ensemble will be evaluated using the dataset from the
+    test TfRecord and the resulting values will be stored in a pickle.
+
+    Args:
+        first_exp_id (int or str): First experiment id. Defaults to None.
+        second_exp_id (int or str): Second experiment id. Defaults to None.
+        test_record (str): Path to evaluation TfRecord. Defaults to None.
+        class_names (list): Ordered list of class names. Defaults to None.
+        metrics (list): List of metrics to evaluate. Defaults to None.
+        log (str, optional): Filename to write the log. Defaults to None.
+        use_weighted_average (bool, optional). Defaults to False.
+        valid_record (str, optional): Path to valid TfRecord. Defaults to None.
+
+    Raises:
+        Exception: If the validation or evaluation TfRecords do not exist
+    """
 
     result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
 
@@ -177,6 +208,8 @@ def evaluate_late_fusion_ensemble(
     )
 
     # evaluate metrics
+    if metrics is None:
+        metrics = ["acc", "precision", "recall", "f1"]
     compile_metrics = [metrics_class_names[m] for m in metrics]
     ensemble.compile(
         loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
