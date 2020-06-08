@@ -33,7 +33,7 @@ The processes available for execution are the following:
 
 #### Results folder structure
 
-Depending on the process being executed, a new subdirectory will be created within `results` with a unique identifier (uid) for the experiment and a description given by the user, e.g. `uid-network-dataset`. The structure for each subdirectory looks something like
+Depending on the process being executed, a new subdirectory will be created within `results` with an unique identifier (uid) for the experiment and a description given by the user, e.g. `uid-network-dataset`. The structure for each subdirectory looks something like
 
 ```
 📦DeepSars_multilabel_rx
@@ -47,7 +47,6 @@ Depending on the process being executed, a new subdirectory will be created with
       ┣ 📜evaluation_log.txt
       ┗ 📜metrics_on_evaluation.pkl
 ```
-
 
 ## To Do list
 
