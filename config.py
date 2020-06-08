@@ -60,8 +60,7 @@ network.freeze = False
 # desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
 desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
 
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Transformations
+## Transformations
 
 # Always keep these two functions uncommented
 dataset.map_functions.append('dataset.from_bytes_to_dict')
@@ -80,8 +79,7 @@ dataset.map_functions.append('dataset.extract_data_from_dict_multiview') # multi
 desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet_multiview')
 desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug_multiview')
 
-# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Choose one policy
+### Policies
 
 # Single view mapping functions
 # desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy');           minval = 0;
@@ -98,13 +96,13 @@ desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing_mu
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Choose callbacks
 
-# callbacks.decay_lr_after_epoch      = EasyDict(func='callbacks.decay_lr_on_epoch_end', verbose=1)
-callbacks.reduce_lr_on_plateau      = EasyDict(monitor="val_loss", factor=0.1, patience=1, verbose=1, mode="min", min_lr=1e-8)
-callbacks.model_checkpoint_callback = EasyDict(save_weights_only=False, monitor="val_loss", mode="min", save_best_only=True)
-callbacks.multiple_class_auroc      = EasyDict(class_names=class_names, stats=None)
+# callbacks.decay_lr_after_epoch = EasyDict(func='callbacks.decay_lr_on_epoch_end', verbose=1)
+callbacks.reduce_lr_on_plateau = EasyDict(monitor="val_loss", factor=0.1, patience=1, verbose=1, mode="min", min_lr=1e-8)
+callbacks.multiple_class_auroc = EasyDict(class_names=class_names, model_name='0001-bivlab-densenet121', stats=None)
+# callbacks.model_checkpoint_callback = EasyDict(save_weights_only=False, monitor="val_loss", mode="min", save_best_only=True)
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names)
-train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
+# train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)

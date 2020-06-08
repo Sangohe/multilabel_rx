@@ -17,11 +17,16 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
     Monitor mean AUROC and update model
     """
 
-    def __init__(self, dataset, class_names=None, result_subdir=None, stats=None):
+    def __init__(
+        self, dataset, class_names=None, result_subdir=None, model_name=None, stats=None
+    ):
         super(tf.keras.callbacks.Callback, self).__init__()
         self.dataset = dataset
         self.class_names = class_names
-        self.save_model_path = os.path.join(result_subdir, "best_auc_model.h5")
+        if model_name is None:
+            self.save_model_path = os.path.join(result_subdir, "best_auc_model.h5")
+        else:
+            self.save_model_path = os.path.join(result_subdir, model_name + ".h5")
 
         if stats:
             self.stats = stats

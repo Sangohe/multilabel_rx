@@ -122,6 +122,19 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2):
     except:
         print("Error. Could not save metric's plot")
 
+    # Create MD
+    utils.generate_md_file(
+        result_subdir,
+        config.class_names,
+        config.train_record,
+        config.valid_record,
+        config.network,
+        config.dataset,
+        config.train,
+        config.callbacks,
+        config.feature_dict,
+    )
+
 
 if __name__ == "__main__":
     utils.init_output_logging()

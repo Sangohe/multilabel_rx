@@ -1,6 +1,7 @@
 import os
 import sys
 import glob
+import mdutils
 import importlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -266,3 +267,69 @@ class HistoryPlotter(object):
                     os.path.join(self.result_subdir, "metrics_on_training.png")
                 )
             )
+
+
+# ------------------------------------------------------------------------------------------------------
+# Generate Markdown file at the end of execution
+
+
+def generate_md_file(
+    result_subdir,
+    class_names,
+    train_record,
+    valid_record,
+    network_dict,
+    dataset_dict,
+    training_dict,
+    callbacks_dict,
+    feature_dict,
+):
+    """Takes the dictionaries with the training configuration and generates a markdown file"""
+
+    exp_uid = result_subdir.split("-")[0]
+    title = "Experiment {} - Train {}".format(exp_uid, network_dict.model_name)
+    md_file = mdutils.MdUtils(file_name="README.md", title=title)
+
+    # Introduction section
+    md_file.new_paragraph(
+        "In the following sections you will find a detailed description of the configuration "
+        "that was used at the time of the execution of this experiment for the multi-label "
+        "classification of the following diseases:"
+    )
+    md_file.new_list(items=class_names)
+
+    # Network section
+    md_file.new_header(level=1, title="Network")
+    network_items = [
+        "Model name: {}".format(network_dict.model_name),
+        "Input shape: {}".format(network_dict.input_shape),
+        "All layers were frozen except the prediction layer"
+        if network_dict.freeze
+        else "No layers were frozen",
+    ]
+    md_file.new_list(items=network_items)
+
+    # Dataset section
+
+    ## Records subsection
+    md_file.new_header(level=1, title="Dataset")
+    md_file.new_paragraph(
+        "These were the `*.tfrecords` files and feature dictionary function used for training and validation during the execution:"
+    )
+    record_items = [
+        "Training record: {}".format(train_record),
+        "Validation record: {}".format(valid_record),
+        "Feature dictionary function: {}".format(feature_dict.func),
+    ]
+    md_file.new_list(items=record_items)
+
+    ## Mapping functions
+    md_file.new_list(items=dataset_dict.map_functions)
+
+    # Training section
+    md_file.new_header(level=1, title="Training")
+    md_file.new_paragraph(
+        "The training was carried out using {} and an initial learning rate of {}. Also, there were some callbacks "
+        "used to modify the learning rate during training and save the model with the best AUC score. List of callbacks:"
+    )
+    md_file.new_list(items=list(callbacks_dict.keys()))
