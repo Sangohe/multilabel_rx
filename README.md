@@ -56,8 +56,8 @@ Depending on the process being executed, a new subdirectory will be created with
   - [ ] Work on `utils.HistoryPlotter` to make it plot the metrics when there's no validation data
   - [ ] Modify the model save in `train_single_network` to match the DeepSars naming convention
 - Add the following functions to `train.py`:
-  - [x] `train_single_network`: trains a default `tf.keras.applications` network using a test and validation record
-  - [ ] `train_late_fusion_ensemble`: trains two default `tf.keras.applications` networks using either a standard `Average` layer or a custom `WeightedAverage` layer
+  - [x] **`train_single_network`:** trains a default `tf.keras.applications` network using a test and validation record
+  - [ ] **`train_late_fusion_ensemble`:** trains two default `tf.keras.applications` networks using either a standard `Average` layer or a custom `WeightedAverage` layer
 - Add the following functions to `util_scripts.py`:
-  - [x] `evaluate_single_network`: evaluates a single model using a test set
-  - [x] `evaluate_late_fusion_ensemble`: takes two trained models or a late fusion ensemble to evaluate using a test set
+  - [x] **`evaluate_single_network`:** evaluates a single model using a test set
+  - [x] **`evaluate_late_fusion_ensemble`:** takes two trained models or a late fusion ensemble to evaluate using a test set
