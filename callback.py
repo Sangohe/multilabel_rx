@@ -76,4 +76,6 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
                 )
             )
             self.model.save(self.save_model_path)
+            # Update Best Mean AUROC to keep comparing later
+            self.stats["best_mean_auroc"] = mean_auroc
         return
