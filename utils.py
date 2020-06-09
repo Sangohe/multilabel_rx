@@ -333,3 +333,6 @@ def generate_md_file(
         "used to modify the learning rate during training and save the model with the best AUC score. List of callbacks:"
     )
     md_file.new_list(items=list(callbacks_dict.keys()))
+
+    # Create Markdownfile
+    md_file.create_md_file()
