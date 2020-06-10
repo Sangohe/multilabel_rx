@@ -276,7 +276,7 @@ def train_ensemble_network(
     except:
         print("Error. Could not save metric's plot")
 
-    # Create MD
+    # Create Markdowm file with experiment configuration
     utils.generate_md_file(
         result_subdir,
         config.class_names,

@@ -288,8 +288,10 @@ def generate_md_file(
     """Takes the dictionaries with the training configuration and generates a markdown file"""
 
     exp_uid = result_subdir.split("-")[0]
+    md_filename = os.path.join(result_subdir, "README.md")
     title = "Experiment {} - Train {}".format(exp_uid, network_1_dict.model_name)
-    md_file = mdutils.MdUtils(file_name="README.md", title=title)
+    md_file = mdutils.MdUtils(file_name=md_filename, title=title)
+    print("Saving experiment configuration to {}".format(md_filename))
 
     # Introduction section
     md_file.new_paragraph(
@@ -337,6 +339,9 @@ def generate_md_file(
     md_file.new_list(items=record_items)
 
     ## Mapping functions
+    md_file.new_paragraph(
+        "Also, these were the functions used to process the data during training"
+    )
     md_file.new_list(items=dataset_dict.map_functions)
 
     # Training section
