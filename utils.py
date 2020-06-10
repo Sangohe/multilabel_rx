@@ -278,16 +278,17 @@ def generate_md_file(
     class_names,
     train_record,
     valid_record,
-    network_dict,
+    network_1_dict,
     dataset_dict,
     training_dict,
     callbacks_dict,
     feature_dict,
+    network_2_dict=None,
 ):
     """Takes the dictionaries with the training configuration and generates a markdown file"""
 
     exp_uid = result_subdir.split("-")[0]
-    title = "Experiment {} - Train {}".format(exp_uid, network_dict.model_name)
+    title = "Experiment {} - Train {}".format(exp_uid, network_1_dict.model_name)
     md_file = mdutils.MdUtils(file_name="README.md", title=title)
 
     # Introduction section
@@ -299,15 +300,27 @@ def generate_md_file(
     md_file.new_list(items=class_names)
 
     # Network section
-    md_file.new_header(level=1, title="Network")
-    network_items = [
-        "Model name: {}".format(network_dict.model_name),
-        "Input shape: {}".format(network_dict.input_shape),
+    md_file.new_header(level=1, title="Networks")
+    md_file.new_header(level=2, title="Network 1")
+    network_1_items = [
+        "Model name: {}".format(network_1_dict.model_name),
+        "Input shape: {}".format(network_1_dict.input_shape),
         "All layers were frozen except the prediction layer"
-        if network_dict.freeze
+        if network_1_dict.freeze
         else "No layers were frozen",
     ]
-    md_file.new_list(items=network_items)
+    md_file.new_list(items=network_1_items)
+
+    if network_2_dict is not None:
+        md_file.new_header(level=2, title="Network 2")
+        network_2_items = [
+            "Model name: {}".format(network_2_dict.model_name),
+            "Input shape: {}".format(network_2_dict.input_shape),
+            "All layers were frozen except the prediction layer"
+            if network_2_dict.freeze
+            else "No layers were frozen",
+        ]
+        md_file.new_list(items=network_2_items)
 
     # Dataset section
 
