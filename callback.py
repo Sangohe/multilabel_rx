@@ -18,20 +18,17 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
     """
 
     def __init__(
-        self, dataset, class_names=None, result_subdir=None, model_name=None, stats=None
+        self, dataset, stats=None, exp_name=None, class_names=None, result_subdir=None,
     ):
         super(tf.keras.callbacks.Callback, self).__init__()
         self.dataset = dataset
         self.class_names = class_names
-        if model_name is None:
+        self.stats = {"best_mean_auroc": 0} if stats else stats
+
+        if exp_name is None:
             self.save_model_path = os.path.join(result_subdir, "best_auc_model.h5")
         else:
-            self.save_model_path = os.path.join(result_subdir, model_name + ".h5")
-
-        if stats:
-            self.stats = stats
-        else:
-            self.stats = {"best_mean_auroc": 0}
+            self.save_model_path = os.path.join(result_subdir, exp_name + ".h5")
 
         # aurocs log
         self.aurocs = {}
@@ -52,13 +49,17 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         )
         print("--------------------------------------------------------")
 
-        data = list(self.dataset.unbatch().as_numpy_iterator())
-        x = np.asarray([element[0] for element in data])
-        y = np.asarray([element[1] for element in data])
-
-        y_hat = self.model.predict(x)
-
+        y = []
+        y_hat = []
         current_auroc = []
+
+        for x_batch, y_batch in self.dataset.as_numpy_iterator():
+            y.append(y_batch)
+            y_hat.append(self.model.predict(x_batch))
+
+        y = np.concatenate(y, axis=0)
+        y_hat = np.concatenate(y, axis=0)
+
         for i in range(len(self.class_names)):
             try:
                 score = roc_auc_score(y[:, i], y_hat[:, i])
