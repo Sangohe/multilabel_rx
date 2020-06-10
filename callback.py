@@ -58,7 +58,7 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
             y_hat.append(self.model.predict(x_batch))
 
         y = np.concatenate(y, axis=0)
-        y_hat = np.concatenate(y, axis=0)
+        y_hat = np.concatenate(y_hat, axis=0)
 
         for i in range(len(self.class_names)):
             try:
