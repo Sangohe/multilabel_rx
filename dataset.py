@@ -71,7 +71,7 @@ def scale_0(image, label):
     image = tf.cast(image, tf.float32)
     image = image / 255.0
     image = tf.image.resize(
-        image, [config.network.input_shape[0], config.network.input_shape[0]]
+        image, [config.network_1.input_shape[0], config.network_1.input_shape[0]]
     )
     return image, tf.cast(label, tf.float32)
 
@@ -81,7 +81,7 @@ def scale_minus1_1(image, label):
     image = tf.cast(image, tf.float32)
     image = (image / 127.5) - 1
     image = tf.image.resize(
-        image, [config.network.input_shape[0], config.network.input_shape[0]]
+        image, [config.network_1.input_shape[0], config.network_1.input_shape[0]]
     )
 
     return image, tf.cast(label, tf.float32)
@@ -98,7 +98,7 @@ def scale_imagenet(image, label):
     image = tf.cast(image, tf.float32)
     image = image / 255.0
     image = tf.image.resize(
-        image, [config.network.input_shape[0], config.network.input_shape[0]]
+        image, [config.network_1.input_shape[0], config.network_1.input_shape[0]]
     )
     image = (image - imagenet_mean) / imagenet_std
 
@@ -169,13 +169,15 @@ def scale_0_multiview(images, label):
     frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = frontal_image / 255.0
     frontal_image = tf.image.resize(
-        frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        frontal_image,
+        [config.network_1.input_shape[0], config.network_1.input_shape[0]],
     )
 
     lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = lateral_image / 255.0
     lateral_image = tf.image.resize(
-        lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        lateral_image,
+        [config.network_2.input_shape[0], config.network_2.input_shape[0]],
     )
     return frontal_image, lateral_image, tf.cast(label, tf.float32)
 
@@ -185,13 +187,15 @@ def scale_minus1_1_multiview(images, label):
     frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = (frontal_image / 127.5) - 1
     frontal_image = tf.image.resize(
-        frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        frontal_image,
+        [config.network_1.input_shape[0], config.network_1.input_shape[0]],
     )
 
     lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = (lateral_image / 127.5) - 1
     lateral_image = tf.image.resize(
-        lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        lateral_image,
+        [config.network_2.input_shape[0], config.network_2.input_shape[0]],
     )
 
     return frontal_image, lateral_image, tf.cast(label, tf.float32)
@@ -208,14 +212,16 @@ def scale_imagenet_multiview(images, label):
     frontal_image = tf.cast(images[0], tf.float32)
     frontal_image = frontal_image / 255.0
     frontal_image = tf.image.resize(
-        frontal_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        frontal_image,
+        [config.network_1.input_shape[0], config.network_1.input_shape[0]],
     )
     frontal_image = (frontal_image - imagenet_mean) / imagenet_std
 
     lateral_image = tf.cast(images[1], tf.float32)
     lateral_image = lateral_image / 255.0
     lateral_image = tf.image.resize(
-        lateral_image, [config.network.input_shape[0], config.network.input_shape[0]]
+        lateral_image,
+        [config.network_2.input_shape[0], config.network_2.input_shape[0]],
     )
     lateral_image = (lateral_image - imagenet_mean) / imagenet_std
 
