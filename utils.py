@@ -289,7 +289,12 @@ def generate_md_file(
 
     exp_uid = result_subdir.split("-")[0]
     md_filename = os.path.join(result_subdir, "README.md")
-    title = "Experiment {} - Train {}".format(exp_uid, network_1_dict.model_name)
+    if network_2_dict is not None:
+        title = "Experiment {} - Train {}-{}".format(
+            exp_uid, network_1_dict.model_name, network_2_dict.model_name
+        )
+    else:
+        title = "Experiment {} - Train {}".format(exp_uid, network_1_dict.model_name)
     md_file = mdutils.MdUtils(file_name=md_filename, title=title)
     print("Saving experiment configuration to {}".format(md_filename))
 
@@ -329,7 +334,8 @@ def generate_md_file(
     ## Records subsection
     md_file.new_header(level=1, title="Dataset")
     md_file.new_paragraph(
-        "These were the `*.tfrecords` files and feature dictionary function used for training and validation during the execution:"
+        "These were the `*.tfrecords` files and feature dictionary function used for training"
+        " and validation during the execution:"
     )
     record_items = [
         "Training record: {}".format(train_record),
@@ -347,8 +353,9 @@ def generate_md_file(
     # Training section
     md_file.new_header(level=1, title="Training")
     md_file.new_paragraph(
-        "The training was carried out using {} and an initial learning rate of {}. Also, there were some callbacks "
-        "used to modify the learning rate during training and save the model with the best AUC score. List of callbacks:"
+        f"The training was carried out using {config.train.epochs} epochs and an initial learning"
+        f" rate of {config.train.epochs}. Also, there were some callbacks used to modify the learning"
+        " rate during training and save the model with the best AUC score. List of callbacks:"
     )
     md_file.new_list(items=list(callbacks_dict.keys()))
 
