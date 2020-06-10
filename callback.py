@@ -23,7 +23,7 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         super(tf.keras.callbacks.Callback, self).__init__()
         self.dataset = dataset
         self.class_names = class_names
-        self.stats = {"best_mean_auroc": 0} if stats else stats
+        self.stats = stats if stats else {"best_mean_auroc": 0}
 
         if exp_name is None:
             self.save_model_path = os.path.join(result_subdir, "best_auc_model.h5")
