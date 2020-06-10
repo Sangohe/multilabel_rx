@@ -9,63 +9,66 @@ class EasyDict(dict):
     def __delattr__(self, name): del self[name]
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Class names and paths
+# Class names and paths to records
 
 random_seed = 2626
+exp_name = '0001-bivlab-ensemble'
 class_names = ['Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung Opacity', 'Edema', 'Consolidation', 'Pneumonia', 'Atelectasis', 'Pleural Effusion']
 
 result_dir = 'results'
-data_dir = '/data/DeepSARS/datasets/tf_records/ChestX-Ray14/raw/'
-train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_train.tfrecord'
-valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_valid.tfrecord'
-test_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_MF_test.tfrecord'
+train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_train.tfrecord'
+valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_valid.tfrecord'
+test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_test.tfrecord'
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Execution configuration
-
-env          = EasyDict(CUDA_VISIBLE_DEVICES='0')                                # Enviroment variables
-feature_dict = EasyDict(func='dataset.rx_chexpert', n_diseases=len(class_names)) # Options for dataset func.
-train        = EasyDict(func='train.train_single_network')                       # Options for main training func.
-network      = EasyDict()                                                        # Options for the network
-callbacks    = EasyDict()                                                        # Callbacks options
-
-train.epochs = 50;   train.initial_lr = 1e-3;   train.verbose = 2
+# Environment configuration
+env = EasyDict(CUDA_VISIBLE_DEVICES='0')
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Choose which network to use
+# Options for the network(s). Uncomment network 2 if you're going to train an ensemble model.
 
-network.model_name = 'DenseNet121';             desc = 'densenet121';
-# network.model_name = 'DenseNet169';             desc = 'densenet169';
-# network.model_name = 'DenseNet201';             desc = 'densenet201';
-# network.model_name = 'InceptionResNetV2';       desc = 'inception_resnet_v2';
-# network.model_name = 'Xception';                desc = 'xception';
+network_1 = EasyDict(freeze=False, weights_path=None, input_shape=(224, 224, 3), n_classes=len(class_names), model_name='frontal')
 
-network.input_shape = (224, 224, 3)
-network.n_classes = len(class_names)   
-network.weights_path = None
-network.freeze = False
+network_1.module_name = 'DenseNet121';             desc = 'densenet121';
+# network_1.module_name = 'DenseNet169';             desc = 'densenet169';
+# network_1.module_name = 'DenseNet201';             desc = 'densenet201';
+# network_1.module_name = 'InceptionResNetV2';       desc = 'inception_resnet_v2';
+# network_1.module_name = 'Xception';                desc = 'xception';
+
+network_2 = EasyDict(freeze=False, weights_path=None, input_shape=(224, 224, 3), n_classes=len(class_names), model_name='lateral')
+
+network_2.module_name = 'DenseNet121';             desc += '-densenet121';
+# network_2.module_name = 'DenseNet169';             desc += '-densenet169';
+# network_2.module_name = 'DenseNet201';             desc += '-densenet201';
+# network_2.module_name = 'InceptionResNetV2';       desc += '-inception_resnet_v2';
+# network_2.module_name = 'Xception';                desc += '-xception';
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Dataset (choose one)
+# Dataset options
 # f: frontal, l: lateral, multi: multiview, tm: template matched, ct: contidional training
 
-# desc += '-rx_chest14';            dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chest14_tm';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_f';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_f_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_l';         dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_l_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_multi';     dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_multi_ct';  dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
-# desc += '-rx_chexpert_multi_l';   dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);  dataset.map_functions = []
-desc += '-rx_chexpert_multi_f';   dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);  dataset.map_functions = []
+# Feature dictionary to use
+feature_dict = EasyDict(func='dataset.rx_chexpert_multiview', n_diseases=len(class_names))
+
+# Dataset options
+# desc += '-rx_chest14';                dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chest14_tm';             dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_f';             dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_f_ct';          dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_l';             dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_l_ct';          dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+desc += '-rx_chexpert_multi';         dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);   dataset.map_functions = []
+# desc += '-rx_chexpert_multi_ct';      dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_multi_f';       dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_multi_f_ct';    dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
+# desc += '-rx_chexpert_multi_l';       dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);   dataset.map_functions = []
+# desc += '-rx_chexpert_multi_l_ct';    dataset = EasyDict(batch_size=32, shuffle=1024, prefetch=10);   dataset.map_functions = []
 
 ## Transformations
 
-# Always keep these two functions uncommented
 dataset.map_functions.append('dataset.from_bytes_to_dict')
-# dataset.map_functions.append('dataset.extract_data_from_dict') # single view
-dataset.map_functions.append('dataset.extract_data_from_dict_multiview') # multiview
+# dataset.map_functions.append('dataset.extract_data_from_dict')
+dataset.map_functions.append('dataset.extract_data_from_dict_multiview')
 
 # Single view mapping functions
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0')
@@ -94,12 +97,19 @@ desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flip
 desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = .55;   maxval = .85;
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Choose callbacks
+# Callback options. You can choose multiple callbacks or none at all
+callbacks = EasyDict()
 
 # callbacks.decay_lr_after_epoch = EasyDict(func='callbacks.decay_lr_on_epoch_end', verbose=1)
 callbacks.reduce_lr_on_plateau = EasyDict(monitor="val_loss", factor=0.1, patience=1, verbose=1, mode="min", min_lr=1e-8)
-callbacks.multiple_class_auroc = EasyDict(class_names=class_names, model_name='0001-bivlab-densenet121', stats=None)
+callbacks.multiple_class_auroc = EasyDict(class_names=class_names, exp_name=exp_name, stats=None)
 # callbacks.model_checkpoint_callback = EasyDict(save_weights_only=False, monitor="val_loss", mode="min", save_best_only=True)
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Network Training options
+
+# train = EasyDict(func='train.train_single_network', epochs = 50, initial_lr = 1e-3, verbose = 2)
+train = EasyDict(func='train.train_ensemble_network', epochs = 50, initial_lr = 1e-3, verbose = 2, use_weighted_average=True)
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
