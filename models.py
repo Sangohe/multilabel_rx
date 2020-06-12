@@ -119,7 +119,6 @@ def multiclass_ensemble(
 
     # Freeze the Ensemble Model and unfreeze the predictions and average layers
     if freeze:
-        ensemble.trainable = False
         for layer in ensemble.layers:
             if (
                 "average" in layer.name
@@ -127,5 +126,7 @@ def multiclass_ensemble(
                 or "avg_pool" in layer.name
             ):
                 layer.trainable = True
+            else:
+                layer.trainable = False
 
     return ensemble
