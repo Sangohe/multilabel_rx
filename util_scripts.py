@@ -155,6 +155,15 @@ def evaluate_late_fusion_ensemble(
         Exception: If the validation or evaluation TfRecords do not exist
     """
 
+    metrics_class_names = {
+        "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
+        "precision": tf.keras.metrics.Precision(name="precision"),
+        "recall": tf.keras.metrics.Recall(name="recall"),
+        "f1": tfa.metrics.F1Score(
+            num_classes=len(class_names), average="micro", name="f1_score"
+        ),
+    }
+
     if run_id is not None:
         result_subdir = utils.locate_result_subdir(run_id)
         if log is not None:
@@ -171,15 +180,6 @@ def evaluate_late_fusion_ensemble(
         )
     else:
         result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
-
-        metrics_class_names = {
-            "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
-            "precision": tf.keras.metrics.Precision(name="precision"),
-            "recall": tf.keras.metrics.Recall(name="recall"),
-            "f1": tfa.metrics.F1Score(
-                num_classes=len(class_names), average="micro", name="f1_score"
-            ),
-        }
 
         # Load the trained models and give names to the model
         # and all the layers to avoid errors.
