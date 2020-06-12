@@ -25,9 +25,13 @@ test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert
 env = EasyDict(CUDA_VISIBLE_DEVICES='0')
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Options for the network(s). Uncomment network 2 if you're going to train an ensemble model.
+# Options for the network(s). network_1 is the main network and should be the only
+# one you change if training with a single model. Uncomment network_2 and create more
+# networks if you are going to train with an Ensemble Model.
 
 network_1 = EasyDict(freeze=False, weights_path=None, input_shape=(224, 224, 3), n_classes=len(class_names), model_name='frontal')
+network_1.model_path = None
+network_1.weights_path = None
 
 network_1.module_name = 'DenseNet121';             desc = 'densenet121';
 # network_1.module_name = 'DenseNet169';             desc = 'densenet169';
@@ -36,12 +40,21 @@ network_1.module_name = 'DenseNet121';             desc = 'densenet121';
 # network_1.module_name = 'Xception';                desc = 'xception';
 
 network_2 = EasyDict(freeze=False, weights_path=None, input_shape=(224, 224, 3), n_classes=len(class_names), model_name='lateral')
+network_2.model_path = None
+network_2.weights_path = None
 
 network_2.module_name = 'DenseNet121';             desc += '-densenet121';
 # network_2.module_name = 'DenseNet169';             desc += '-densenet169';
 # network_2.module_name = 'DenseNet201';             desc += '-densenet201';
 # network_2.module_name = 'InceptionResNetV2';       desc += '-inception_resnet_v2';
 # network_2.module_name = 'Xception';                desc += '-xception';
+
+# After creating all the network dictionaries, you should add all of them to `networks` 
+# dictionary
+
+networks = EasyDict(networks=[network_1, network_2])
+networks.model_path = None
+networks.weights_path = None
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Dataset options
@@ -108,8 +121,8 @@ callbacks.multiple_class_auroc = EasyDict(class_names=class_names, exp_name=exp_
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Network Training options
 
-# train = EasyDict(func='train.train_single_network', epochs = 50, initial_lr = 1e-3, verbose = 2)
-train = EasyDict(func='train.train_ensemble_network', epochs = 50, initial_lr = 1e-3, verbose = 2, use_weighted_average=True)
+# train = EasyDict(func='train.train_single_network', epochs = 50)
+train = EasyDict(func='train.train_ensemble_network', epochs = 50)
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts

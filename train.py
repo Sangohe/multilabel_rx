@@ -138,9 +138,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=Tru
     )
 
 
-def train_ensemble_network(
-    epochs=5, initial_lr=1e-3, use_weighted_average=True, print_summary=False, verbose=2
-):
+def train_ensemble_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=True):
 
     # Create result subdirectory to store the experiment results
     result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
@@ -173,46 +171,11 @@ def train_ensemble_network(
         .prefetch(config.dataset.prefetch)
     )
 
-    # Load both models and print each model's summary if print_summary = True
+    # Load the Ensemble Model
+    ensemble = models.multiclass_ensemble(**config.networks)
 
-    # First model
-    try:
-        print("Loading the first model...\n")
-        model_1 = models.multiclass_model(**config.network_1)
-        if print_summary:
-            model_1.summary()
-    except:
-        raise Exception(
-            "Check if network_1 dictionary arguments are correctly assigned"
-        )
-
-    # Second model
-    try:
-        print("Loading the second model...\n")
-        model_2 = models.multiclass_model(**config.network_2)
-        if print_summary:
-            model_2.summary()
-    except:
-        raise Exception(
-            "Check if network_2 dictionary arguments are correctly assigned"
-        )
-
-    if use_weighted_average:
-        print("Using the Custom WeightedAverage Layer")
-        average_layer = layers.WeightedAverage(name="weighted_average_layer")(
-            [model_1.output, model_2.output]
-        )
-    else:
-        print("Using the standard Average Layer")
-        average_layer = tf.keras.layers.Average(name="average_layer")(
-            [model_1.output, model_2.output]
-        )
-
-    # Create the ensemble
-    print("Creating the ensemble...")
-    ensemble = tf.keras.Model(
-        inputs=[model_1.input, model_2.input], outputs=[average_layer]
-    )
+    if print_summary:
+        ensemble.summary()
 
     # Optimizer + compile the model
     adam_optimizer = tf.keras.optimizers.Adam(
