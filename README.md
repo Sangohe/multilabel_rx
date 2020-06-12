@@ -51,12 +51,15 @@ Depending on the process being executed, a new subdirectory will be created with
 ## To Do list
 
 - Enhance current behaviour of existing features:
-  - [ ] Make so that every function in `train.py` creates a `README.md` in the experiment subfolder with information about the training
+  - [x] Make so that every function in `train.py` creates a `README.md` in the experiment subfolder with information about the training
+  - [x] Modify the model save in `train_single_network` to match the DeepSars naming convention
+  - [x] Refactor all the functions in `train.py` to work as follows:
+    - A training function ALWAYS creates a new result subdirectory.
+    - In the beginning of each training process, the user might choose between building the model from scratch and load it with the imagenet or other pretrained Model weights or load an already built model
   - [ ] Work on `utils.HistoryPlotter` to make it plot the metrics when there's no validation data
-  - [ ] Modify the model save in `train_single_network` to match the DeepSars naming convention
 - Add the following functions to `train.py`:
   - [x] **`train_single_network`:** trains a default `tf.keras.applications` network using a test and validation record
-  - [ ] **`train_late_fusion_ensemble`:** trains two default `tf.keras.applications` networks using either a standard `Average` layer or a custom `WeightedAverage` layer
+  - [x] **`train_ensemble_network`:** trains $N$ default `tf.keras.applications` networks using either a standard `Average` layer or a custom `WeightedAverage` layer
 - Add the following functions to `util_scripts.py`:
   - [x] **`evaluate_single_network`:** evaluates a single model using a test set
   - [x] **`evaluate_late_fusion_ensemble`:** takes two trained models or a late fusion ensemble to evaluate using a test set

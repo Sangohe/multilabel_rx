@@ -1,4 +1,5 @@
 import os
+import glob
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -122,6 +123,7 @@ def evaluate_single_network(
 
 
 def evaluate_late_fusion_ensemble(
+    run_id=None,
     first_exp_id=None,
     second_exp_id=None,
     test_record=None,
@@ -153,96 +155,118 @@ def evaluate_late_fusion_ensemble(
         Exception: If the validation or evaluation TfRecords do not exist
     """
 
-    result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
-
-    metrics_class_names = {
-        "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
-        "precision": tf.keras.metrics.Precision(name="precision"),
-        "recall": tf.keras.metrics.Recall(name="recall"),
-        "f1": tfa.metrics.F1Score(
-            num_classes=len(class_names), average="micro", name="f1_score"
-        ),
-    }
-
-    # Load the trained models and give names to the model
-    # and all the layers to avoid errors.
-    first_subdir = utils.locate_result_subdir(first_exp_id)
-    first_model_path = os.path.join(first_subdir, "best_auc_model.h5")
-    print("Loading the first model from {}".format(first_model_path))
-    first_model = tf.keras.models.load_model(first_model_path)
-    first_model._name = "first_model"
-    for layer in first_model.layers:
-        layer._name = "first_model_" + layer.name
-    first_model.trainable = False
-
-    second_subdir = utils.locate_result_subdir(second_exp_id)
-    second_model_path = os.path.join(second_subdir, "best_auc_model.h5")
-    print("Loading the second model from {}".format(second_model_path))
-    second_model = tf.keras.models.load_model(second_model_path)
-    second_model._name = "second_model"
-    for layer in second_model.layers:
-        layer._name = "second_model_" + layer.name
-    second_model.trainable = False
-
-    # Create a layer that will average both predictions
-    if use_weighted_average:
-        print("Using the Custom WeightedAverage Layer")
-        average_layer = layers.WeightedAverage(name="weighted_average_layer")(
-            [first_model.output, second_model.output]
-        )
-
-        print("Using the {} record to adjust weights\n".format(valid_record))
-        if config.train_record is not None:
-            valid_dataset = tf.data.TFRecordDataset(valid_record)
+    if run_id is not None:
+        result_subdir = utils.locate_result_subdir(run_id)
+        if log is not None:
+            log_file = os.path.join(result_subdir, log)
         else:
-            raise Exception("No path for the Validation TfRecord was given.")
+            log_file = os.path.join(result_subdir, "evaluation_log.txt")
+        print("Logging output to {}".format(log_file))
+        utils.set_output_log_file(log_file)
 
-        # Apply the stack of transformations uncommented in config.py
-        valid_dataset = dataset.map_functions(
-            valid_dataset, config.dataset.map_functions
-        )
-
-        # Shuffle, batch and prefetch both datasets
-        valid_batches = (
-            valid_dataset.shuffle(config.dataset.shuffle, reshuffle_each_iteration=True)
-            .batch(config.dataset.batch_size)
-            .prefetch(config.dataset.prefetch)
+        print("Loading the best AUC model for this experiment...")
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
+        ensemble = tf.keras.models.load_model(
+            model_path, custom_objects={"WeightedAverage": layers.WeightedAverage}
         )
     else:
-        print("Using the standard Average Layer")
-        average_layer = tf.keras.layers.Average(name="average_layer")(
-            [first_model.output, second_model.output]
+        result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
+
+        metrics_class_names = {
+            "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
+            "precision": tf.keras.metrics.Precision(name="precision"),
+            "recall": tf.keras.metrics.Recall(name="recall"),
+            "f1": tfa.metrics.F1Score(
+                num_classes=len(class_names), average="micro", name="f1_score"
+            ),
+        }
+
+        # Load the trained models and give names to the model
+        # and all the layers to avoid errors.
+        first_subdir = utils.locate_result_subdir(first_exp_id)
+        first_model_path = os.path.join(first_subdir, "best_auc_model.h5")
+        print("Loading the first model from {}".format(first_model_path))
+        first_model = tf.keras.models.load_model(first_model_path)
+        first_model._name = "first_model"
+        for layer in first_model.layers:
+            layer._name = "first_model_" + layer.name
+        first_model.trainable = False
+
+        second_subdir = utils.locate_result_subdir(second_exp_id)
+        second_model_path = os.path.join(second_subdir, "best_auc_model.h5")
+        print("Loading the second model from {}".format(second_model_path))
+        second_model = tf.keras.models.load_model(second_model_path)
+        second_model._name = "second_model"
+        for layer in second_model.layers:
+            layer._name = "second_model_" + layer.name
+        second_model.trainable = False
+
+        # Create a layer that will average both predictions
+        if use_weighted_average:
+            print("Using the Custom WeightedAverage Layer")
+            average_layer = layers.WeightedAverage(name="weighted_average_layer")(
+                [first_model.output, second_model.output]
+            )
+
+            print("Using the {} record to adjust weights\n".format(valid_record))
+            if config.train_record is not None:
+                valid_dataset = tf.data.TFRecordDataset(valid_record)
+            else:
+                raise Exception("No path for the Validation TfRecord was given.")
+
+            # Apply the stack of transformations uncommented in config.py
+            valid_dataset = dataset.map_functions(
+                valid_dataset, config.dataset.map_functions
+            )
+
+            # Shuffle, batch and prefetch both datasets
+            valid_batches = (
+                valid_dataset.shuffle(
+                    config.dataset.shuffle, reshuffle_each_iteration=True
+                )
+                .batch(config.dataset.batch_size)
+                .prefetch(config.dataset.prefetch)
+            )
+        else:
+            print("Using the standard Average Layer")
+            average_layer = tf.keras.layers.Average(name="average_layer")(
+                [first_model.output, second_model.output]
+            )
+
+        # Create the ensemble
+        print("Creating the ensemble...")
+        ensemble = tf.keras.Model(
+            inputs=[first_model.input, second_model.input], outputs=[average_layer]
         )
 
-    # Create the ensemble
-    print("Creating the ensemble...")
-    ensemble = tf.keras.Model(
-        inputs=[first_model.input, second_model.input], outputs=[average_layer]
-    )
+        if use_weighted_average:
+            # optimizer + compile the model
+            adam_optimizer = tf.keras.optimizers.Adam(
+                lr=1e-4,
+                beta_1=0.9,
+                beta_2=0.999,
+                epsilon=None,
+                decay=0.0,
+                amsgrad=False,
+            )
 
-    if use_weighted_average:
-        # optimizer + compile the model
-        adam_optimizer = tf.keras.optimizers.Adam(
-            lr=1e-4, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False,
-        )
+            ensemble.compile(
+                optimizer=adam_optimizer,
+                loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
+            )
 
-        ensemble.compile(
-            optimizer=adam_optimizer,
-            loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
-        )
+            # train
+            print("Adjusting average weights for the ensemble")
+            history = {}
+            history["Ensemble"] = ensemble.fit(valid_batches, epochs=2, verbose=2,)
 
-        # train
-        print("Adjusting average weights for the ensemble")
-        history = {}
-        history["Ensemble"] = ensemble.fit(valid_batches, epochs=2, verbose=2,)
+            # graph metrics
+            plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
 
-        # graph metrics
-        plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
-
-        try:
-            plotter.plot(history)
-        except:
-            print("Error. Could not save metric's plot")
+            try:
+                plotter.plot(history)
+            except:
+                print("Error. Could not save metric's plot")
 
     print("Using the {} record to evaluate\n".format(test_record))
     if config.test_record is not None:
