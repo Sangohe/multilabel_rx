@@ -341,3 +341,17 @@ def evaluate_late_fusion_ensemble(
     model_path = os.path.join(result_subdir, "ensemble.h5")
     print("Saving model to {}".format(model_path))
     ensemble.save(model_path)
+
+
+def generate_cams(run_id, image_path=None, csv_path=None):
+    """This function generates Class Activation Maps using a single Model"""
+    if image_path is not None:
+        # read the image and generate just the CAM
+        pass
+    elif csv_path is not None:
+        # Read the csv and generate the CAMs for each row. The CSV must have
+        # the following columns: Image Index, Finding Label, Bbox, x, y, w, h
+        pass
+    else:
+        print("No image or CSV path were given.")
+
