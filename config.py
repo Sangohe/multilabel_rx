@@ -22,7 +22,7 @@ test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Environment configuration
-env = EasyDict(CUDA_VISIBLE_DEVICES='0')
+env = EasyDict(CUDA_VISIBLE_DEVICES='0', TF_DETERMINISTIC_OPS='1')
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Options for the network(s). network_1 is the main network and should be the only
@@ -127,5 +127,5 @@ train = EasyDict(func='train.train_ensemble_network', epochs = 50)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-# train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names)
+# train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
