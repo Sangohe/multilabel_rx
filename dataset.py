@@ -1,7 +1,9 @@
+import cv2
 import importlib
+import numpy as np
 import tensorflow as tf
 
-import utils
+import misc
 import config
 
 # --------------------------------------------------------------------------------
@@ -45,7 +47,7 @@ def rx_chexpert_multiview(n_diseases=8):
     return encode_dict
 
 
-encoding_dictionary = utils.call_func_by_name(**config.feature_dict)
+encoding_dictionary = misc.call_func_by_name(**config.feature_dict)
 
 # --------------------------------------------------------------------------------
 # TF Mapping functions
@@ -268,11 +270,35 @@ def label_smoothing_multiview(images, label):
 
 
 # --------------------------------------------------------------------------------
+# NP Mapping functions
+
+
+def scale_imagenet_np(image):
+    """Takes a single image, resize it and scale its values using
+    the imagenet mean and standard deviation
+
+    Args:
+        image (array): numpy array containing the pixel values
+    """
+
+    imagenet_mean = np.array([0.485, 0.456, 0.406])
+    imagenet_std = np.array([0.229, 0.224, 0.225])
+
+    image = image.astype(np.float32)
+    image /= 255.0
+    image = cv2.resize(image, (224, 224))
+    image = np.expand_dims(image, axis=0)
+    image = (image - imagenet_mean) / imagenet_std
+
+    return image
+
+
+# --------------------------------------------------------------------------------
 # Apply functions
 
 
 def map_functions(dataset, funcs, num_parallel_calls=24):
     """Map all the elements in dataset using each function in funcs"""
     for func in funcs:
-        dataset = dataset.map(utils.import_obj(func), num_parallel_calls)
+        dataset = dataset.map(misc.import_obj(func), num_parallel_calls)
     return dataset

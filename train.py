@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-import utils
+import misc
 import layers
 import models
 import config
@@ -26,7 +26,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=Tru
     """
 
     # Create result subdirectory to store the experiment results
-    result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
+    result_subdir = misc.create_result_subdir(config.result_dir, config.desc)
 
     # Read dataset
     if config.train_record is not None:
@@ -117,7 +117,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=Tru
     )
 
     # graph metrics
-    plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
+    plotter = misc.HistoryPlotter(metric="loss", result_subdir=result_subdir)
 
     try:
         plotter.plot(history)
@@ -125,7 +125,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=Tru
         print("Error. Could not save metric's plot")
 
     # Create MD
-    utils.generate_md_file(
+    misc.generate_md_file(
         result_subdir,
         config.class_names,
         config.train_record,
@@ -141,7 +141,7 @@ def train_single_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=Tru
 def train_ensemble_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=True):
 
     # Create result subdirectory to store the experiment results
-    result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
+    result_subdir = misc.create_result_subdir(config.result_dir, config.desc)
 
     # Read dataset with a return structure like this -> ((x1, x2), y)
     if config.train_record is not None:
@@ -232,7 +232,7 @@ def train_ensemble_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=T
     )
 
     # graph metrics
-    plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
+    plotter = misc.HistoryPlotter(metric="loss", result_subdir=result_subdir)
 
     try:
         plotter.plot(history)
@@ -240,7 +240,7 @@ def train_ensemble_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=T
         print("Error. Could not save metric's plot")
 
     # Create Markdowm file with experiment configuration
-    utils.generate_md_file(
+    misc.generate_md_file(
         result_subdir,
         config.class_names,
         config.train_record,
@@ -255,11 +255,11 @@ def train_ensemble_network(epochs=5, initial_lr=1e-3, verbose=2, print_summary=T
 
 
 if __name__ == "__main__":
-    utils.init_output_logging()
+    misc.init_output_logging()
     tf.random.set_seed(config.random_seed)
     np.random.seed(config.random_seed)
     print("Initializing execution...")
     os.environ.update(config.env)
     print("Running %s()..." % config.train["func"])
-    utils.call_func_by_name(**config.train)
+    misc.call_func_by_name(**config.train)
     print("\nEnding execution...")
