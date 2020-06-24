@@ -129,3 +129,4 @@ train = EasyDict(func='train.train_ensemble_network', epochs = 50)
 
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
+# train = EasyDict(func='util_scripts.generate_cams', model_path="", run_id=None, image_path="", scale_func="dataset.scale_imagenet_np", class_names=class_names)

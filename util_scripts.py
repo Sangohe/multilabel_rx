@@ -1,4 +1,5 @@
 import os
+import cv2
 import glob
 import pickle
 import numpy as np
@@ -6,7 +7,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from sklearn.metrics import roc_auc_score
 
-import utils
+import misc
 import config
 import layers
 import dataset
@@ -40,13 +41,13 @@ def evaluate_single_network(
         ),
     }
 
-    result_subdir = utils.locate_result_subdir(run_id)
+    result_subdir = misc.locate_result_subdir(run_id)
     if log is not None:
         log_file = os.path.join(result_subdir, log)
     else:
         log_file = os.path.join(result_subdir, "evaluation_log.txt")
     print("Logging output to {}".format(log_file))
-    utils.set_output_log_file(log_file)
+    misc.set_output_log_file(log_file)
 
     print("Loading the best AUC model for this experiment...")
     model = tf.keras.models.load_model(os.path.join(result_subdir, "best_auc_model.h5"))
@@ -165,13 +166,13 @@ def evaluate_late_fusion_ensemble(
     }
 
     if run_id is not None:
-        result_subdir = utils.locate_result_subdir(run_id)
+        result_subdir = misc.locate_result_subdir(run_id)
         if log is not None:
             log_file = os.path.join(result_subdir, log)
         else:
             log_file = os.path.join(result_subdir, "evaluation_log.txt")
         print("Logging output to {}".format(log_file))
-        utils.set_output_log_file(log_file)
+        misc.set_output_log_file(log_file)
 
         print("Loading the best AUC model for this experiment...")
         model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
@@ -179,11 +180,11 @@ def evaluate_late_fusion_ensemble(
             model_path, custom_objects={"WeightedAverage": layers.WeightedAverage}
         )
     else:
-        result_subdir = utils.create_result_subdir(config.result_dir, config.desc)
+        result_subdir = misc.create_result_subdir(config.result_dir, config.desc)
 
         # Load the trained models and give names to the model
         # and all the layers to avoid errors.
-        first_subdir = utils.locate_result_subdir(first_exp_id)
+        first_subdir = misc.locate_result_subdir(first_exp_id)
         first_model_path = os.path.join(first_subdir, "best_auc_model.h5")
         print("Loading the first model from {}".format(first_model_path))
         first_model = tf.keras.models.load_model(first_model_path)
@@ -192,7 +193,7 @@ def evaluate_late_fusion_ensemble(
             layer._name = "first_model_" + layer.name
         first_model.trainable = False
 
-        second_subdir = utils.locate_result_subdir(second_exp_id)
+        second_subdir = misc.locate_result_subdir(second_exp_id)
         second_model_path = os.path.join(second_subdir, "best_auc_model.h5")
         print("Loading the second model from {}".format(second_model_path))
         second_model = tf.keras.models.load_model(second_model_path)
@@ -261,7 +262,7 @@ def evaluate_late_fusion_ensemble(
             history["Ensemble"] = ensemble.fit(valid_batches, epochs=2, verbose=2,)
 
             # graph metrics
-            plotter = utils.HistoryPlotter(metric="loss", result_subdir=result_subdir)
+            plotter = misc.HistoryPlotter(metric="loss", result_subdir=result_subdir)
 
             try:
                 plotter.plot(history)
@@ -343,15 +344,86 @@ def evaluate_late_fusion_ensemble(
     ensemble.save(model_path)
 
 
-def generate_cams(run_id, image_path=None, csv_path=None):
+def generate_cams(
+    model_path=None, run_id=None, image_path=None, scale_func=None, class_names=None,
+):
     """This function generates Class Activation Maps using a single Model"""
-    if image_path is not None:
-        # read the image and generate just the CAM
-        pass
-    elif csv_path is not None:
-        # Read the csv and generate the CAMs for each row. The CSV must have
-        # the following columns: Image Index, Finding Label, Bbox, x, y, w, h
-        pass
+
+    # Load the model:
+    # Read directly from the model_path, otherwise use the run_id
+    if os.path.exists(model_path):
+        # Create the other_models dir in results if it doesn't exist
+        other_path = os.path.join(config.result_dir, "other_models")
+        if not os.path.exists(other_path):
+            os.makedirs(other_path)
+        # Create a subdirectory inside other_path with the model_name
+        result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
+        if not os.path.exists(result_subdir):
+            os.makedirs(result_subdir)
+    elif run_id is not None:
+        result_subdir = misc.locate_result_subdir(run_id)
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))
     else:
-        print("No image or CSV path were given.")
+        raise FileNotFoundError("Neither the model_path or run_id were provided")
+
+    log_file = os.path.join(result_subdir, "cams.txt")
+    print("Logging output to {}".format(log_file))
+    misc.set_output_log_file(log_file)
+
+    print(f"Loading the pretrained Model from {model_path}")
+    model = tf.keras.models.load_model(model_path)
+
+    # Create the graph using the Model's layers.
+    class_weights = model.layers[-1].get_weights()[0]
+    final_conv_layer = model.get_layer("bn")
+    get_output = kb.function(
+        [model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]
+    )
+
+    if os.path.exists(image_path):
+        # Save path for CAMs
+        save_path = os.path.join(
+            result_subdir, image_path.split("/")[-1].replace(".", "_")
+        )
+
+        # Read the image and generate just the CAM.
+        image_raw = cv2.imread(image_path)
+        image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
+        scale_func = "dataset.scale_imagenet_np" if scale_func is None else scale_func
+        print(f"Using {scale_func} function to preprocess the image.")
+        image = misc.call_func_by_name(scale_func)(image_rgb)
+
+        # Execute the tf function.
+        [conv_outputs, predictions] = get_output(image)
+        conv_outputs = conv_outputs[0, ...]
+
+        # Create CAM for each class
+        if class_names is None:
+            class_names = [f"Class {i}" for i in range(len(class_weights))]
+        for idx, cls in enumerate(class_names):
+            cam = np.zeros(dtype=np.float32, shape=(conv_outputs.shape[:2]))
+            for i, w in enumerate(class_weights[idx]):
+                cam += w * conv_outputs[:, :, i]
+            cam /= np.max(cam)
+            cam = cv2.resize(cam, (image_rgb.shape[:2]))
+            heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
+            heatmap[np.where(cam < 0.2)] = 0
+            image = heatmap * 0.5 + image_rgb
+
+            # Put some text to recognize to what class the CAM belongs.
+            cv2.putText(
+                image,
+                text=f"{cls}",
+                org=(20, 50),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=2.0,
+                color=(255, 255, 255),
+                thickness=1,
+            )
+
+            cam_path = os.path.join(save_path, f"{cls}_cam.png")
+            cv2.imwrite(cam_path, image)
+            print(f"{cls} Class Activation Map saved to: {cam_path}")
+    else:
+        raise FileNotFoundError("Image path doesn't exists")
 
