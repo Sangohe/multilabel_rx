@@ -10,11 +10,12 @@ from sklearn.metrics import roc_auc_score
 import misc
 import config
 import layers
+import metrics
 import dataset
 
 
 def evaluate_single_network(
-    run_id, test_record=None, class_names=None, metrics=None, log=None,
+    run_id, test_record=None, class_names=None, log=None,
 ):
     """Takes a single experiment id to locate the result subdirectory and
     load the model with the best AUC score for that experiment. Then, the
@@ -31,15 +32,6 @@ def evaluate_single_network(
     Raises:
         Exception: If the evaluation TfRecord does not exist
     """
-
-    metrics_class_names = {
-        "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
-        "precision": tf.keras.metrics.Precision(name="precision"),
-        "recall": tf.keras.metrics.Recall(name="recall"),
-        "f1": tfa.metrics.F1Score(
-            num_classes=len(class_names), average="micro", name="f1_score"
-        ),
-    }
 
     result_subdir = misc.locate_result_subdir(run_id)
     if log is not None:
@@ -68,55 +60,23 @@ def evaluate_single_network(
         .prefetch(config.dataset.prefetch)
     )
 
-    # evaluate metrics
-    if metrics is None:
-        metrics = ["acc", "precision", "recall", "f1"]
-    compile_metrics = [metrics_class_names[m] for m in metrics]
-    model.compile(
-        optimizer="Adam",
-        loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
-        metrics=compile_metrics,
-    )
+    # Evaluation metrics.
+    y = []
+    y_hat = []
 
-    evaluation_metrics = model.evaluate(test_batches, verbose=2)
-    eval_metrics = {
-        key: (round(value * 100, 2))
-        for (key, value) in zip(["loss"] + metrics, list(evaluation_metrics))
-    }
+    for x_batch, y_batch in test_batches.as_numpy_iterator():
+        y.append(y_batch)
+        y_hat.append(model.predict(x_batch))
 
-    eval_metrics["loss"] = round(eval_metrics["loss"] / 100.0, 2)
-
-    # append auc score
-    eval_metrics["auc"] = {}
-    data = list(test_dataset.as_numpy_iterator())
-    x = np.asarray([element[0] for element in data])
-    y = np.asarray([element[1] for element in data])
-
-    y_hat = model.predict(x)
+    y = np.concatenate(y, axis=0)
+    y_hat = np.concatenate(y_hat, axis=0)
 
     if class_names is None:
-        class_names = ["Class {}".format(i) for i in range(y.shape[1])]
+        class_names = ["Class {}".format(i) for i in range(y.shape[-1])]
 
-    current_auroc = []
-    print("\n--------------------------------------------------------")
-    print("AUROC Score Evaluation for each class in the dataset ")
-    print("--------------------------------------------------------")
-    for i in range(len(class_names)):
-        try:
-            score = roc_auc_score(y[:, i], y_hat[:, i])
-        except ValueError:
-            score = 0
-        eval_metrics["auc"][class_names[i]] = round(score, 2) * 100
-        current_auroc.append(score)
-        print("{:02d}. {:26s} -> {:>8}".format(i + 1, class_names[i], score))
+    eval_metrics = metrics.multiclass_metrics(y, y_hat)
 
-    mean_auroc = np.mean(current_auroc)
-    eval_metrics["auc"]["mean"] = round(mean_auroc, 2) * 100
-    print("--------------------------------------------------------")
-    print("MEAN AUROC: {:>40}".format(mean_auroc))
-    print("--------------------------------------------------------\n")
-
-    # save metrics with pickle
+    # Serialize metrics with Pickle.
     pickle_path = os.path.join(result_subdir, "metrics_on_evaluation.pkl")
     print("Saving metrics to {}".format(pickle_path))
     with open(pickle_path, "wb") as handle:
@@ -155,15 +115,6 @@ def evaluate_late_fusion_ensemble(
     Raises:
         Exception: If the validation or evaluation TfRecords do not exist
     """
-
-    metrics_class_names = {
-        "acc": tf.keras.metrics.BinaryAccuracy(name="accuracy"),
-        "precision": tf.keras.metrics.Precision(name="precision"),
-        "recall": tf.keras.metrics.Recall(name="recall"),
-        "f1": tfa.metrics.F1Score(
-            num_classes=len(class_names), average="micro", name="f1_score"
-        ),
-    }
 
     if run_id is not None:
         result_subdir = misc.locate_result_subdir(run_id)
@@ -285,55 +236,23 @@ def evaluate_late_fusion_ensemble(
         .prefetch(config.dataset.prefetch)
     )
 
-    # evaluate metrics
-    if metrics is None:
-        metrics = ["acc", "precision", "recall", "f1"]
-    compile_metrics = [metrics_class_names[m] for m in metrics]
-    ensemble.compile(
-        loss=tf.keras.losses.BinaryCrossentropy(from_logits=False),
-        metrics=compile_metrics,
-    )
+    # Evaluation metrics.
+    y = []
+    y_hat = []
 
-    evaluation_metrics = ensemble.evaluate(test_batches, verbose=2)
-    eval_metrics = {
-        key: (round(value * 100, 2))
-        for (key, value) in zip(["loss"] + metrics, list(evaluation_metrics))
-    }
+    for x_batch, y_batch in test_batches.as_numpy_iterator():
+        y.append(y_batch)
+        y_hat.append(model.predict(x_batch))
 
-    eval_metrics["loss"] = round(eval_metrics["loss"] / 100.0, 2)
-
-    # append auc score
-    eval_metrics["auc"] = {}
-    data = list(test_dataset.as_numpy_iterator())
-    x1 = np.asarray([element[0][0] for element in data])
-    x2 = np.asarray([element[0][1] for element in data])
-    y = np.asarray([element[1] for element in data])
-
-    y_hat = ensemble.predict([x1, x2])
+    y = np.concatenate(y, axis=0)
+    y_hat = np.concatenate(y_hat, axis=0)
 
     if class_names is None:
-        class_names = ["Class {}".format(i) for i in range(y.shape[1])]
+        class_names = ["Class {}".format(i) for i in range(y.shape[-1])]
 
-    current_auroc = []
-    print("\n--------------------------------------------------------")
-    print("AUROC Score Evaluation for each class in the dataset ")
-    print("--------------------------------------------------------")
-    for i in range(len(class_names)):
-        try:
-            score = roc_auc_score(y[:, i], y_hat[:, i])
-        except ValueError:
-            score = 0
-        eval_metrics["auc"][class_names[i]] = round(score, 2) * 100
-        current_auroc.append(score)
-        print("{:02d}. {:26s} -> {:>8}".format(i + 1, class_names[i], score))
+    eval_metrics = metrics.multiclass_metrics(y, y_hat)
 
-    mean_auroc = np.mean(current_auroc)
-    eval_metrics["auc"]["mean"] = round(mean_auroc, 2) * 100
-    print("--------------------------------------------------------")
-    print("MEAN AUROC: {:>40}".format(mean_auroc))
-    print("--------------------------------------------------------\n")
-
-    # save metrics with pickle
+    # Serialize metrics with Pickle.
     pickle_path = os.path.join(result_subdir, "metrics_on_evaluation.pkl")
     print("Saving metrics to {}".format(pickle_path))
     with open(pickle_path, "wb") as handle:
