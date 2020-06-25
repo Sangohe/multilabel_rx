@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
 
@@ -58,3 +59,45 @@ def multiclass_metrics(y_true, y_hat):
         metrics["auc"].append(auc)
 
     return metrics
+
+
+def multiclass_roc_curve(y_true, y_hat):
+    """Compares the true and predicted values to calculate the ROC AUC 
+    Curves for each class.
+
+    Args:
+        y_true (array): ground truth values
+        y_hat ([type]): predicted values
+
+    Returns:
+        dictionaries: two dictionaries with both the false positive rates
+        and true positive rates for each class and also the micro and 
+        macro averages
+    """
+
+    fpr = dict()
+    tpr = dict()
+
+    n_classes = y_true.shape[-1]
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_true[:, i], y_hat[:, i])
+
+    # Compute micro-average ROC curve and ROC area
+    fpr["micro"], tpr["micro"], _ = roc_curve(y_true.ravel(), y_hat.ravel())
+
+    # First aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    # Then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # Finally average it and compute AUC
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+
+    return fpr, tpr
