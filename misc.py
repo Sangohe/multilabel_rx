@@ -270,6 +270,42 @@ class HistoryPlotter(object):
 
 
 # ------------------------------------------------------------------------------------------------------
+# Model utilities
+
+
+def is_composite_model(model):
+    """Takes a tf.keras.Model and check if there are multiple Models
+    in its architecture to return True, otherwise returns False"""
+    num_of_models = 0
+    for layer in model.layers:
+        if isinstance(layer, tf.python.keras.engine.training.Model):
+            num_of_models += 1
+        if num_of_models >= 2:
+            return True
+    return False
+
+
+# ------------------------------------------------------------------------------------------------------
+# UMAP
+
+
+def umap_points(predictions):
+    """Transforms embeddings into points in a 3D space using UMAP"""
+    from umap import UMAP
+
+    transformer = UMAP(
+        n_neighbors=20,
+        min_dist=0.5,
+        n_components=3,
+        metric="euclidean",
+        transform_seed=8128,
+    )
+    umap_points = transformer.fit_transform(predictions)
+
+    return transformer, umap_points
+
+
+# ------------------------------------------------------------------------------------------------------
 # Generate Markdown file at the end of execution
 
 

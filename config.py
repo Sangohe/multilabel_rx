@@ -80,20 +80,20 @@ desc += '-rx_chexpert_multi';         dataset = EasyDict(batch_size=32, shuffle=
 ## Transformations
 
 dataset.map_functions.append('dataset.from_bytes_to_dict')
-# dataset.map_functions.append('dataset.extract_data_from_dict')
-dataset.map_functions.append('dataset.extract_data_from_dict_multiview')
+dataset.map_functions.append('dataset.extract_data_from_dict')
+# dataset.map_functions.append('dataset.extract_data_from_dict_multiview')
 
 # Single view mapping functions
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0')
 # desc += '-scale_1';        dataset.map_functions.append('dataset.scale_minus1_1')
-# desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
-# desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
+desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
+desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
 
 # Multiview mapping functions
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0_multiview')
 # desc += '-scale_1';        dataset.map_functions.append('dataset.scale_minus1_1_multiview')
-desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet_multiview')
-desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug_multiview')
+# desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet_multiview')
+# desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug_multiview')
 
 ### Policies
 
@@ -127,6 +127,7 @@ train = EasyDict(func='train.train_ensemble_network', epochs = 50)
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
+# train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
 # train = EasyDict(func='util_scripts.generate_cams', model_path="", run_id=None, image_path="", scale_func="dataset.scale_imagenet_np", class_names=class_names)

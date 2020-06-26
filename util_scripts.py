@@ -14,6 +14,173 @@ import metrics
 import dataset
 
 
+def evaluate_multiclass_model(
+    run_id=None,
+    model_path="",
+    train_record="",
+    test_record="",
+    class_names=None,
+    visuals=False,
+):
+    # Load the model:
+    # Use the run_id if given, otherwise use the model_path
+    if run_id is not None:
+        result_subdir = misc.locate_result_subdir(run_id)
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))
+    elif os.path.exists(model_path):
+        # Create the other_models dir in results if it doesn't exist
+        other_path = os.path.join(config.result_dir, "other_models")
+        if not os.path.exists(other_path):
+            os.makedirs(other_path)
+        # Create a subdirectory inside other_path with the model_name
+        result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
+        if not os.path.exists(result_subdir):
+            os.makedirs(result_subdir)
+    else:
+        raise FileNotFoundError("Neither the model_path or run_id were provided")
+
+    log_file = os.path.join(result_subdir, "evaluation_log.txt")
+    print("Logging output to {}".format(log_file))
+    misc.set_output_log_file(log_file)
+
+    print(f"Loading a pretrained Model from {model_path}")
+    model = tf.keras.models.load_model(model_path)
+
+    print(f"Loading datasets...")
+    if os.path.exists(train_record):
+        train_record = tf.data.TFRecordDataset(train_record)
+        train_dataset = dataset.map_functions(
+            train_record, config.dataset.map_functions
+        )
+        train_dataset_batches = train_dataset.batch(config.dataset.batch_size).prefetch(
+            config.dataset.prefetch
+        )
+
+        if visuals:
+            train_embeddings = dataset.map_functions(
+                train_record, config.dataset.map_functions[:2]
+            )
+            train_embeddings_batches = train_embeddings.batch(
+                config.dataset.batch_size
+            ).prefetch(config.dataset.prefetch)
+    else:
+        print("No train record path were provided. Proceeding without it.")
+
+    if os.path.exists(test_record):
+        test_record = tf.data.TFRecordDataset(test_record)
+        test_dataset = dataset.map_functions(test_record, config.dataset.map_functions)
+        test_dataset_batches = test_dataset.batch(config.dataset.batch_size).prefetch(
+            config.dataset.prefetch
+        )
+
+        if visuals:
+            test_embeddings = dataset.map_functions(
+                test_record, config.dataset.map_functions[:2]
+            )
+            test_embeddings_batches = test_embeddings.batch(
+                config.dataset.batch_size
+            ).prefetch(config.dataset.prefetch)
+    else:
+        raise FileNotFoundError(
+            "The test record path doesn't exists. You must provide a valid test "
+            "path for the evaluation"
+        )
+
+    # Evaluation metrics.
+    eval_metrics = dict()
+    y_true = []
+    y_hat = []
+
+    for x_batch, y_batch in test_dataset_batches.as_numpy_iterator():
+        y_true.append(y_batch)
+        y_hat.append(model.predict(x_batch))
+
+    y_true = np.concatenate(y_true, axis=0)
+    y_hat = np.concatenate(y_hat, axis=0)
+
+    if class_names is None:
+        class_names = ["Class {}".format(i) for i in range(y.shape[-1])]
+
+    # Multiclass metrics.
+    eval_metrics["metrics"] = metrics.multiclass_metrics(y_true, y_hat)
+    for key, val in eval_metrics["metrics"].items():
+        eval_metrics["metrics"][key] = round(np.mean(val) * 100, 2)
+
+    # ROC Curve.
+    fpr, tpr = metrics.multiclass_roc_curve(y_true, y_hat)
+    eval_metrics["roc"] = {"fpr": fpr["macro"].tolist(), "tpr": tpr["macro"].tolist()}
+
+    if visuals:
+        print("Building model to calculate embeddings...")
+        embedding_model = tf.keras.models.clone_model(model)
+        embedding_model.set_weights(model.get_weights())
+
+        if misc.is_composite_model(embedding_model):
+            for layer in embedding_model.layers:
+                if isinstance(layer, tf.python.keras.engine.training.Model):
+                    for sub_layer in layer.layers:
+                        if "predictions" in sub_layer.name:
+                            sub_layer.activation = tf.keras.activations.linear
+        else:
+            for layer in embedding_model.layers:
+                if "predictions" in layer.name:
+                    sub_layer.activation = tf.keras.activations.linear
+
+        print("Calculating embeddings for the train and test dataset...")
+        labels = []
+        umap_predictions = []
+        test_predictions = []
+        train_predictions = []
+        # Test data for UMAP.
+        for x_batch, y_batch in test_dataset_batches.as_numpy_iterator():
+            umap_predictions.append(embedding_model.predict(x_batch))
+            test_predictions.append(model.predict(x_batch))
+        for x_batch, y_batch in test_embeddings_batches.as_numpy_iterator():
+            labels.append(y_batch)
+        # Train data for UMAP.
+        for x_batch, y_batch in train_dataset_batches.as_numpy_iterator():
+            umap_predictions.append(embedding_model.predict(x_batch))
+            train_predictions.append(model.predict(x_batch))
+        for x_batch, y_batch in train_embeddings_batches.as_numpy_iterator():
+            labels.append(y_batch)
+
+        labels = np.concatenate(labels, axis=0)
+        umap_predictions = np.concatenate(umap_predictions, axis=0)
+        test_predictions = np.concatenate(test_predictions, axis=0)
+        train_predictions = np.concatenate(train_predictions, axis=0)
+
+        transformer, umap_points = misc.umap_points(umap_predictions)
+        eval_metrics["transformer"] = transformer
+        eval_metrics["embedded"] = {
+            "x": umap_points[:, 0].tolist(),
+            "y": umap_points[:, 1].tolist(),
+            "z": umap_points[:, 2].tolist(),
+            "label": labels.tolist(),
+        }
+
+        print("Saving points for violin plot...")
+        eval_metrics["violin"] = {
+            "train": train_predictions.tolist(),
+            "test": test_predictions.tolist(),
+        }
+
+        print("Saving points for gaussian plot...")
+        joint_predictions = np.concatenate(
+            (test_predictions, train_predictions), axis=0
+        )
+        eval_metrics["gaussian"] = {
+            "mean": joint_predictions.mean(axis=0).tolist(),
+            "std": joint_predictions.std(axis=0).tolist(),
+            "probs": joint_predictions.tolist(),
+        }
+
+    # Serialize metrics with Pickle.
+    pickle_path = os.path.join(result_subdir, "metrics_on_evaluation.pkl")
+    print("Saving metrics to {}".format(pickle_path))
+    with open(pickle_path, "wb") as handle:
+        pickle.dump(eval_metrics, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 def evaluate_single_network(
     run_id, test_record=None, class_names=None, log=None,
 ):
@@ -45,7 +212,7 @@ def evaluate_single_network(
     model = tf.keras.models.load_model(os.path.join(result_subdir, "best_auc_model.h5"))
 
     print("Using the {} record to evaluate\n".format(test_record))
-    if config.train_record is not None:
+    if config.test_record is not None:
         test_dataset = tf.data.TFRecordDataset(test_record)
     else:
         raise Exception("No path for the Test TfRecord was given.")
@@ -242,7 +409,7 @@ def evaluate_late_fusion_ensemble(
 
     for x_batch, y_batch in test_batches.as_numpy_iterator():
         y.append(y_batch)
-        y_hat.append(model.predict(x_batch))
+        y_hat.append(ensemble.predict(x_batch))
 
     y = np.concatenate(y, axis=0)
     y_hat = np.concatenate(y_hat, axis=0)
