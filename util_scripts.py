@@ -39,7 +39,9 @@ def evaluate_multiclass_model(
             os.makedirs(result_subdir)
         # Copy the model to result_subdir
         print("Copying model to result subdirectory...")
-        shutil.copy(model_path, "{}/{}".format(result_subdir, model_path.split("/")[-1]))
+        shutil.copy(
+            model_path, "{}/{}".format(result_subdir, model_path.split("/")[-1])
+        )
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
@@ -130,18 +132,19 @@ def evaluate_multiclass_model(
                 if "predictions" in layer.name:
                     layer.activation = tf.keras.activations.linear
 
-        print("Calculating embeddings for the train and test dataset...")
         labels = []
         umap_predictions = []
         test_predictions = []
         train_predictions = []
         # Test data for UMAP.
+        print("Predicting on test batches...")
         for x_batch, y_batch in test_dataset_batches.as_numpy_iterator():
             umap_predictions.append(embedding_model.predict(x_batch))
             test_predictions.append(model.predict(x_batch))
         for x_batch, y_batch in test_embeddings_batches.as_numpy_iterator():
             labels.append(y_batch)
         # Train data for UMAP.
+        print("Predicting on train batches...")
         for x_batch, y_batch in train_dataset_batches.as_numpy_iterator():
             umap_predictions.append(embedding_model.predict(x_batch))
             train_predictions.append(model.predict(x_batch))
@@ -153,6 +156,7 @@ def evaluate_multiclass_model(
         test_predictions = np.concatenate(test_predictions, axis=0)
         train_predictions = np.concatenate(train_predictions, axis=0)
 
+        print("Calculating embeddings for the train and test dataset...")
         transformer, umap_points = misc.umap_points(umap_predictions)
         eval_metrics["transformer"] = transformer
         eval_metrics["embedded"] = {
