@@ -4,7 +4,9 @@ import glob
 import mdutils
 import importlib
 import numpy as np
+import tensorflow as tf
 import matplotlib.pyplot as plt
+
 
 import config
 

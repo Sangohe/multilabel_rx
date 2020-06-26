@@ -124,7 +124,7 @@ def evaluate_multiclass_model(
         else:
             for layer in embedding_model.layers:
                 if "predictions" in layer.name:
-                    sub_layer.activation = tf.keras.activations.linear
+                    layer.activation = tf.keras.activations.linear
 
         print("Calculating embeddings for the train and test dataset...")
         labels = []

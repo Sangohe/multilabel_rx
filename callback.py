@@ -40,6 +40,7 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
         Calculate the average AUROC and save the best model weights according
         to this metric.
         """
+        print(self.model.summary())
         self.stats["lr"] = float(kb.eval(self.model.optimizer.lr))
         print("\n--------------------------------------------------------")
         print(
@@ -81,6 +82,7 @@ class MultipleClassAUROC(tf.keras.callbacks.Callback):
                     self.stats["best_mean_auroc"], mean_auroc, self.save_model_path
                 )
             )
+            print("aca se farrea")
             self.model.save(self.save_model_path)
             # Update Best Mean AUROC to keep comparing later
             self.stats["best_mean_auroc"] = mean_auroc

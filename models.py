@@ -41,7 +41,7 @@ def multiclass_model(
             n_classes, activation="sigmoid", name="predictions"
         )(x)
         model = tf.keras.Model(inputs=img_input, outputs=predictions)
-
+        model.save("jeje.h5")
         if weights_path is not None:
             print(f"Creating Model: Using the weights from: {weights_path}")
             model.load_weights(weights_path)
@@ -58,7 +58,8 @@ def multiclass_model(
     if freeze:
         for layer in model.layers[:-2]:
             layer.trainable = False
-
+    
+    model.save("jeje.h5")
     return model
 
 

@@ -16,13 +16,13 @@ exp_name = '0001-bivlab-ensemble'
 class_names = ['Enlarged Cardiomediastinum', 'Cardiomegaly', 'Lung Opacity', 'Edema', 'Consolidation', 'Pneumonia', 'Atelectasis', 'Pleural Effusion']
 
 result_dir = 'results'
-train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_train.tfrecord'
-valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_valid.tfrecord'
-test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_test.tfrecord'
+train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_train_frontal_mt.tfrecord'
+# valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_valid.tfrecord'
+test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_valid_frontal_mt.tfrecord'
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Environment configuration
-env = EasyDict(CUDA_VISIBLE_DEVICES='0', TF_DETERMINISTIC_OPS='1')
+env = EasyDict(CUDA_VISIBLE_DEVICES='1', TF_DETERMINISTIC_OPS='1')
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Options for the network(s). network_1 is the main network and should be the only
@@ -61,7 +61,7 @@ networks.weights_path = None
 # f: frontal, l: lateral, multi: multiview, tm: template matched, ct: contidional training
 
 # Feature dictionary to use
-feature_dict = EasyDict(func='dataset.rx_chexpert_multiview', n_diseases=len(class_names))
+feature_dict = EasyDict(func='dataset.rx_chexpert', n_diseases=len(class_names))
 
 # Dataset options
 # desc += '-rx_chest14';                dataset = EasyDict(batch_size=8, shuffle=1024, prefetch=10);    dataset.map_functions = []
@@ -101,13 +101,13 @@ desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flip
 # desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy');           minval = 0;
 # desc += '-uones';       dataset.map_functions.append('dataset.upolicy');           minval = 1;
 # desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing');   minval = 0;     maxval = .3;      
-# desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
+desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing');   minval = .55;   maxval = .85;
 
 # Multiview mapping functions
 # desc += '-uzeros';      dataset.map_functions.append('dataset.upolicy_multiview');           minval = 0;
 # desc += '-uones';       dataset.map_functions.append('dataset.upolicy_multiview');           minval = 1;
 # desc += '-lsr_uzeros';  dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = 0;     maxval = .3;      
-desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = .55;   maxval = .85;
+# desc += '-lsr_uones';   dataset.map_functions.append('dataset.label_smoothing_multiview');   minval = .55;   maxval = .85;
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Callback options. You can choose multiple callbacks or none at all
@@ -122,12 +122,12 @@ callbacks.multiple_class_auroc = EasyDict(class_names=class_names, exp_name=exp_
 # Network Training options
 
 # train = EasyDict(func='train.train_single_network', epochs = 50)
-train = EasyDict(func='train.train_ensemble_network', epochs = 50)
+# train = EasyDict(func='train.train_ensemble_network', epochs = 50)
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-# train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
+train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, model_path="/home/santgohe/code/DeepSars/models/CheXpert/uniform/densenet121-lsr_uones-tm-ct-finished.h5", train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
 # train = EasyDict(func='util_scripts.generate_cams', model_path="", run_id=None, image_path="", scale_func="dataset.scale_imagenet_np", class_names=class_names)
