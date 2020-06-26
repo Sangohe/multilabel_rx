@@ -39,7 +39,7 @@ def evaluate_multiclass_model(
             os.makedirs(result_subdir)
         # Copy the model to result_subdir
         print("Copying model to result subdirectory...")
-        shutil.copy(model_path, f"{result_subdir}/{model_path.split("/")[-1]}")
+        shutil.copy(model_path, "{}/{}".format(result_subdir, model_path.split("/")[-1]))
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
