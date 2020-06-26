@@ -1,6 +1,7 @@
 import os
 import cv2
 import glob
+import shutil
 import pickle
 import numpy as np
 import tensorflow as tf
@@ -36,6 +37,9 @@ def evaluate_multiclass_model(
         result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
         if not os.path.exists(result_subdir):
             os.makedirs(result_subdir)
+        # Copy the model to result_subdir
+        print("Copying model to result subdirectory...")
+        shutil.copy(model_path, f"{result_subdir}/{model_path.split("/")[-1]}")
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
