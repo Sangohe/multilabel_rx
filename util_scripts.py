@@ -123,12 +123,14 @@ def evaluate_multiclass_model(
         embedding_model.set_weights(model.get_weights())
 
         if misc.is_composite_model(embedding_model):
+            print("Removing sigmoid activation from all models' last layer...")
             for layer in embedding_model.layers:
                 if isinstance(layer, tf.python.keras.engine.training.Model):
                     for sub_layer in layer.layers:
                         if "predictions" in sub_layer.name:
                             sub_layer.activation = tf.keras.activations.linear
         else:
+            print("Removing sigmoid activation from the last layer")
             for layer in embedding_model.layers:
                 if "predictions" in layer.name:
                     layer.activation = tf.keras.activations.linear
