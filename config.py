@@ -9,7 +9,7 @@ class EasyDict(dict):
     def __delattr__(self, name): del self[name]
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Class names and paths to records
+# Class names and paths to record and model path (if evaluating)
 
 random_seed = 2626
 exp_name = '0001-bivlab-ensemble'
@@ -19,6 +19,8 @@ result_dir = 'results'
 train_record = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_train_frontal_mt.tfrecord'
 # valid_record = '/data/DeepSARS/datasets/tf_records/CheXpert/multiview/RXChexpert_M_valid.tfrecord'
 test_record  = '/data/DeepSARS/datasets/tf_records/CheXpert/XR_CheXpert_valid_frontal_mt.tfrecord'
+
+model_path = "/home/santgohe/code/DeepSars/models/CheXpert/uniform/001-deepsars-frontal_ensemble.h5"
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Environment configuration
@@ -127,7 +129,7 @@ callbacks.multiple_class_auroc = EasyDict(class_names=class_names, exp_name=exp_
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, model_path="/home/santgohe/code/DeepSars/models/CheXpert/uniform/001-deepsars-frontal_ensemble.h5", train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
+train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, model_path=model_path, train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
 # train = EasyDict(func='util_scripts.generate_cams', model_path="", run_id=None, image_path="", scale_func="dataset.scale_imagenet_np", class_names=class_names)
