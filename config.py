@@ -87,7 +87,7 @@ dataset.map_functions.append('dataset.extract_data_from_dict')
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0')
 desc += '-scale_1';        dataset.map_functions.append('dataset.scale_minus1_1')
 # desc += '-scale_imagenet'; dataset.map_functions.append('dataset.scale_imagenet')
-desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
+# desc += '-horizontal_aug'; dataset.map_functions.append('dataset.horizontal_flipping_aug')
 
 # Multiview mapping functions
 # desc += '-scale_0';        dataset.map_functions.append('dataset.scale_0_multiview')
@@ -127,7 +127,7 @@ callbacks.multiple_class_auroc = EasyDict(class_names=class_names, exp_name=exp_
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Utility scripts
 
-train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, model_path="/home/santgohe/code/DeepSars/models/CheXpert/uniform/Ensemble.h5", train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
+train = EasyDict(func='util_scripts.evaluate_multiclass_model', run_id=None, model_path="/home/santgohe/code/DeepSars/models/CheXpert/uniform/001-deepsars-frontal_ensemble.h5", train_record=train_record, test_record=test_record, class_names=class_names, visuals=True);
 # train = EasyDict(func='util_scripts.evaluate_single_network', run_id=1, test_record=test_record, class_names=class_names);
 # train = EasyDict(func='util_scripts.evaluate_late_fusion_ensemble', first_exp_id=1, second_exp_id=0, test_record=test_record, class_names=class_names, use_weighted_average=True, valid_record=valid_record)
 # train = EasyDict(func='util_scripts.generate_cams', model_path="", run_id=None, image_path="", scale_func="dataset.scale_imagenet_np", class_names=class_names)
