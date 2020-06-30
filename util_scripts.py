@@ -108,6 +108,7 @@ def evaluate_multiclass_model(
         class_names = ["Class {}".format(i) for i in range(y.shape[-1])]
 
     # Multiclass metrics.
+    print("Calculating the classificaction metrics...")
     eval_metrics["metrics"] = metrics.multiclass_metrics(y_true, y_hat)
     for key, val in eval_metrics["metrics"].items():
         eval_metrics["metrics"][key] = round(np.mean(val) * 100, 2)
@@ -136,14 +137,14 @@ def evaluate_multiclass_model(
         umap_predictions = []
         test_predictions = []
         train_predictions = []
-        # Test data for UMAP.
+
         print("Predicting on test batches...")
         for x_batch, y_batch in test_dataset_batches.as_numpy_iterator():
             umap_predictions.append(embedding_model.predict(x_batch))
             test_predictions.append(model.predict(x_batch))
         for x_batch, y_batch in test_embeddings_batches.as_numpy_iterator():
             labels.append(y_batch)
-        # Train data for UMAP.
+
         print("Predicting on train batches...")
         for x_batch, y_batch in train_dataset_batches.as_numpy_iterator():
             umap_predictions.append(embedding_model.predict(x_batch))

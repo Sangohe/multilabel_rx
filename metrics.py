@@ -44,11 +44,11 @@ def multiclass_metrics(y_true, y_hat):
     for i in range(y_true.shape[1]):
         tn, fp, fn, tp = confusion_matrix(y_true[:, i], y_bin[:, i]).ravel()
 
-        accuracy = (tp + tn) / (tp + tn + fp + fn)
-        precision = tp / (tp + fp)
-        recall = tp / (tp + fn)
-        specificity = tn / (tn + fp)
-        f1_score = (precision * recall) / (precision + recall)
+        accuracy = round(tp + tn, 5) / round(tp + tn + fp + fn, 5)
+        precision = tp / round(tp + fp, 5)
+        recall = tp / round(tp + fn, 5)
+        specificity = tn / round(tn + fp, 5)
+        f1_score = round(precision * recall, 5) / round(precision + recall, 5)
         auc = roc_auc_score(y_true[:, i], y_hat[:, i])
 
         metrics["accuracy"].append(accuracy)
