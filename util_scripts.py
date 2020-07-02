@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 from sklearn.metrics import roc_auc_score
+from tensorflow.keras import backend as kb
 
 import misc
 import config
@@ -459,7 +460,7 @@ def generate_cams(
             os.makedirs(result_subdir)
     elif run_id is not None:
         result_subdir = misc.locate_result_subdir(run_id)
-        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
@@ -482,13 +483,16 @@ def generate_cams(
         save_path = os.path.join(
             result_subdir, image_path.split("/")[-1].replace(".", "_")
         )
+        
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
         # Read the image and generate just the CAM.
         image_raw = cv2.imread(image_path)
         image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
         scale_func = "dataset.scale_imagenet_np" if scale_func is None else scale_func
         print(f"Using {scale_func} function to preprocess the image.")
-        image = misc.call_func_by_name(scale_func)(image_rgb)
+        image = misc.call_func_by_name(image_rgb, func=scale_func)
 
         # Execute the tf function.
         [conv_outputs, predictions] = get_output(image)
@@ -511,9 +515,9 @@ def generate_cams(
             cv2.putText(
                 image,
                 text=f"{cls}",
-                org=(20, 50),
+                org=(20, 20),
                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=2.0,
+                fontScale=0.5,
                 color=(255, 255, 255),
                 thickness=1,
             )

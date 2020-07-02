@@ -51,14 +51,14 @@ def multiclass_model(
             )
 
     # Rename model
-    model._name = model_name
-    for layer in model.layers:
-        layer._name = model_name + "_" + layer.name
+#     model._name = model_name
+#     for layer in model.layers:
+#         layer._name = model_name + "_" + layer.name
+#     model.save("jiji2.h5")
 
     if freeze:
         for layer in model.layers[:-2]:
             layer.trainable = False
-
     return model
 
 
