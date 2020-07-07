@@ -24,21 +24,17 @@ def evaluate_multiclass_model(
     class_names=None,
     visuals=False,
 ):
-    # Load the model:
-    # Use the run_id if given, otherwise use the model_path
+    # Load the model: Use the run_id if given, otherwise use the model_path
     if run_id is not None:
         result_subdir = misc.locate_result_subdir(run_id)
-        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
     elif os.path.exists(model_path):
-        # Create the other_models dir in results if it doesn't exist
         other_path = os.path.join(config.result_dir, "other_models")
         if not os.path.exists(other_path):
             os.makedirs(other_path)
-        # Create a subdirectory inside other_path with the model_name
         result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
         if not os.path.exists(result_subdir):
             os.makedirs(result_subdir)
-        # Copy the model to result_subdir
         print("Copying model to result subdirectory...")
         shutil.copy(
             model_path, "{}/{}".format(result_subdir, model_path.split("/")[-1])
@@ -443,24 +439,22 @@ def evaluate_late_fusion_ensemble(
 
 
 def generate_cams(
-    model_path=None, run_id=None, image_path=None, scale_func=None, class_names=None,
+    run_id=None, model_path=None, image_path=None, scale_func=None, class_names=None,
 ):
     """This function generates Class Activation Maps using a single Model"""
 
-    # Load the model:
-    # Read directly from the model_path, otherwise use the run_id
-    if os.path.exists(model_path):
-        # Create the other_models dir in results if it doesn't exist
+    # Load the model: Use the run_id if given, otherwise use the model_path
+    if run_id is not None:
+        result_subdir = misc.locate_result_subdir(run_id)
+        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
+    elif os.path.exists(model_path):
         other_path = os.path.join(config.result_dir, "other_models")
         if not os.path.exists(other_path):
             os.makedirs(other_path)
-        # Create a subdirectory inside other_path with the model_name
         result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
         if not os.path.exists(result_subdir):
             os.makedirs(result_subdir)
-    elif run_id is not None:
-        result_subdir = misc.locate_result_subdir(run_id)
-        model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
+        )
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
@@ -468,22 +462,24 @@ def generate_cams(
     print("Logging output to {}".format(log_file))
     misc.set_output_log_file(log_file)
 
+    cams_path = os.path.join(result_subdir, "cams")
+    if not os.path.exists(cams_path):
+        os.makedirs(cams_path)
+
     print(f"Loading the pretrained Model from {model_path}")
     model = tf.keras.models.load_model(model_path)
 
     # Create the graph using the Model's layers.
-    class_weights = model.layers[-1].get_weights()[0]
+    class_weights = model.get_layer("logits").get_weights()[0]
     final_conv_layer = model.get_layer("bn")
     get_output = kb.function(
         [model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]
     )
 
     if os.path.exists(image_path):
-        # Save path for CAMs
         save_path = os.path.join(
-            result_subdir, image_path.split("/")[-1].replace(".", "_")
+            cams_path, os.path.splitext(image_path)[0]
         )
-        
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 

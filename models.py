@@ -37,9 +37,8 @@ def multiclass_model(
         )
 
         x = base_model.output
-        predictions = tf.keras.layers.Dense(
-            n_classes, activation="sigmoid", name="predictions"
-        )(x)
+        logits = tf.keras.layers.Dense(n_classes, name="logits")(x)
+        predictions = tf.keras.layers.Activation("sigmoid", name="predictions")(x)
         model = tf.keras.Model(inputs=img_input, outputs=predictions)
 
         if weights_path is not None:
@@ -50,14 +49,8 @@ def multiclass_model(
                 "Creating Model: Using the weights from a pretrained Model on Imagenet"
             )
 
-    # Rename model
-#     model._name = model_name
-#     for layer in model.layers:
-#         layer._name = model_name + "_" + layer.name
-#     model.save("jiji2.h5")
-
     if freeze:
-        for layer in model.layers[:-2]:
+        for layer in model.layers[:-3]:
             layer.trainable = False
     return model
 
@@ -95,12 +88,12 @@ def multiclass_ensemble(
         # Create a layer that will average both predictions
         if use_weighted_average:
             print("\nUsing the Custom WeightedAverage Layer")
-            average_layer = layers.WeightedAverage(name="weighted_average_layer")(
+            average_layer = layers.WeightedAverage(name="weighted_average")(
                 [model.output for model in models]
             )
         else:
             print("\nUsing the standard Average Layer")
-            average_layer = tf.keras.layers.Average(name="average_layer")(
+            average_layer = tf.keras.layers.Average(name="average")(
                 [model.output for model in models]
             )
 
@@ -122,8 +115,9 @@ def multiclass_ensemble(
         for layer in ensemble.layers:
             if (
                 "average" in layer.name
-                or "predictions" in layer.name
                 or "avg_pool" in layer.name
+                or "logits" in layer.name
+                or "predictions" in layer.name
             ):
                 layer.trainable = True
             else:
