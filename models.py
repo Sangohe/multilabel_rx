@@ -36,9 +36,14 @@ def multiclass_model(
             pooling="avg",
         )
 
+        for layer in base_model.layers:
+            layer._name = model_name + "_" + layer._name
+
         x = base_model.output
-        x = tf.keras.layers.Dense(n_classes, name="logits")(x)
-        predictions = tf.keras.layers.Activation("sigmoid", name="predictions")(x)
+        x = tf.keras.layers.Dense(n_classes, name=model_name + "_logits")(x)
+        predictions = tf.keras.layers.Activation(
+            "sigmoid", name=model_name + "_predictions"
+        )(x)
         model = tf.keras.Model(inputs=img_input, outputs=predictions)
 
         if weights_path is not None:
@@ -97,16 +102,16 @@ def multiclass_ensemble(
                 [model.output for model in models]
             )
 
+        # Create the ensemble
+        ensemble = tf.keras.Model(
+            inputs=[model.input for model in models], outputs=[average_layer]
+        )
+
         if weights_path is not None:
             print(f"Creating Ensemble: Using the weights from: {weights_path}")
             ensemble.load_weights(weights_path)
         else:
             print("Creating Ensemble: All the ensemble's models preserve their weights")
-
-        # Create the ensemble
-        ensemble = tf.keras.Model(
-            inputs=[model.input for model in models], outputs=[average_layer]
-        )
 
         print("The Ensemble Model has been successfully created")
 
