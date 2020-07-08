@@ -454,7 +454,6 @@ def generate_cams(
         result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
         if not os.path.exists(result_subdir):
             os.makedirs(result_subdir)
-        )
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
@@ -477,9 +476,7 @@ def generate_cams(
     )
 
     if os.path.exists(image_path):
-        save_path = os.path.join(
-            cams_path, os.path.splitext(image_path)[0]
-        )
+        save_path = os.path.join(cams_path, os.path.splitext(image_path)[0])
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 

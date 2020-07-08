@@ -44,7 +44,7 @@ def multiclass_model(
         predictions = tf.keras.layers.Activation(
             "sigmoid", name=model_name + "_predictions"
         )(x)
-        model = tf.keras.Model(inputs=img_input, outputs=predictions)
+        model = tf.keras.Model(inputs=img_input, outputs=predictions, name=model_name)
 
         if weights_path is not None:
             print(f"Creating Model: Using the weights from: {weights_path}")
@@ -104,7 +104,9 @@ def multiclass_ensemble(
 
         # Create the ensemble
         ensemble = tf.keras.Model(
-            inputs=[model.input for model in models], outputs=[average_layer]
+            inputs=[model.input for model in models],
+            outputs=[average_layer],
+            name="ensemble",
         )
 
         if weights_path is not None:
