@@ -37,7 +37,7 @@ def multiclass_model(
         )
 
         x = base_model.output
-        logits = tf.keras.layers.Dense(n_classes, name="logits")(x)
+        x = tf.keras.layers.Dense(n_classes, name="logits")(x)
         predictions = tf.keras.layers.Activation("sigmoid", name="predictions")(x)
         model = tf.keras.Model(inputs=img_input, outputs=predictions)
 
