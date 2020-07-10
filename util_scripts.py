@@ -489,8 +489,8 @@ def generate_cams(
     model = tf.keras.models.load_model(model_path)
 
     # Create the graph using the Model's layers.
-    class_weights = model.get_layer(model.name + "logits").get_weights()[0]
-    final_conv_layer = model.get_layer(model.name + "bn")
+    class_weights = model.get_layer(model.name + "_logits").get_weights()[0]
+    final_conv_layer = model.get_layer(model.name + "_bn")
     get_output = kb.function(
         [model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]
     )
