@@ -4,6 +4,7 @@ import glob
 import shutil
 import pickle
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import tensorflow_addons as tfa
 from sklearn.metrics import roc_auc_score
@@ -439,85 +440,118 @@ def evaluate_late_fusion_ensemble(
 
 
 def generate_cams(
-    run_id=None, model_path=None, image_path=None, scale_func=None, class_names=None,
+    run_id=None,
+    model_path="",
+    image_path="",
+    csv_path="",
+    class_names=None,
+    scale_func=None,
+    threshold=0.2,
 ):
-    """This function generates Class Activation Maps using a single Model"""
+    """Takes an experiment id or a path to an h5 file to load a pretrained model
+    in order to generate Class Activation Maps by streaming the gradients to the last
+    convolutional layer of the model in order to get a more visual explanation of the
+    model's predictions. The run_id takes precedence over the model_path. 
 
-    # Load the model: Use the run_id if given, otherwise use the model_path
+    Args:
+        run_id (int, optional): experiment uid.
+        model_path (str, optional): path to model in h5 format.
+        image_path (str, optional): path to image.
+        csv_path (str, optional): path to csv with image filenames and annotations.
+        class_names (list, optional): list with the class names to put on CAMs.
+        scale_func (str, optional): function to preprocess the images.
+        threshold (int, optional): probabilities under threshold are mapped to 0.
+    """
+
     if run_id is not None:
         result_subdir = misc.locate_result_subdir(run_id)
         model_path = glob.glob(os.path.join(result_subdir, "*.h5"))[0]
     elif os.path.exists(model_path):
-        other_path = os.path.join(config.result_dir, "other_models")
-        if not os.path.exists(other_path):
-            os.makedirs(other_path)
-        result_subdir = os.path.join(other_path, model_path.split("/")[-1][:-3])
+        result_subdir = os.path.join(
+            config.result_dir,
+            "other_models",
+            os.path.splitext(model_path.split("/")[-1])[0],
+        )
         if not os.path.exists(result_subdir):
             os.makedirs(result_subdir)
     else:
         raise FileNotFoundError("Neither the model_path or run_id were provided")
 
     log_file = os.path.join(result_subdir, "cams.txt")
-    print("Logging output to {}".format(log_file))
+    print(f"Logging output to {log_file}")
     misc.set_output_log_file(log_file)
 
-    cams_path = os.path.join(result_subdir, "cams")
-    if not os.path.exists(cams_path):
-        os.makedirs(cams_path)
+    save_dir = os.path.join(result_subdir, "cams", os.path.splitext(image_path)[0])
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     print(f"Loading the pretrained Model from {model_path}")
     model = tf.keras.models.load_model(model_path)
 
     # Create the graph using the Model's layers.
-    class_weights = model.get_layer("logits").get_weights()[0]
-    final_conv_layer = model.get_layer("bn")
+    class_weights = model.get_layer(model.name + "logits").get_weights()[0]
+    final_conv_layer = model.get_layer(model.name + "bn")
     get_output = kb.function(
         [model.layers[0].input], [final_conv_layer.output, model.layers[-1].output]
     )
 
     if os.path.exists(image_path):
-        save_path = os.path.join(cams_path, os.path.splitext(image_path)[0])
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-
-        # Read the image and generate just the CAM.
         image_raw = cv2.imread(image_path)
         image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
         scale_func = "dataset.scale_imagenet_np" if scale_func is None else scale_func
         print(f"Using {scale_func} function to preprocess the image.")
         image = misc.call_func_by_name(image_rgb, func=scale_func)
 
-        # Execute the tf function.
         [conv_outputs, predictions] = get_output(image)
         conv_outputs = conv_outputs[0, ...]
 
-        # Create CAM for each class
         if class_names is None:
             class_names = [f"Class {i}" for i in range(len(class_weights))]
-        for idx, cls in enumerate(class_names):
+        for idx, label in enumerate(class_names):
+            filename = os.path.join(save_dir, f"{label}_cam.png")
             cam = np.zeros(dtype=np.float32, shape=(conv_outputs.shape[:2]))
             for i, w in enumerate(class_weights[idx]):
                 cam += w * conv_outputs[:, :, i]
             cam /= np.max(cam)
             cam = cv2.resize(cam, (image_rgb.shape[:2]))
-            heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
-            heatmap[np.where(cam < 0.2)] = 0
-            image = heatmap * 0.5 + image_rgb
-
-            # Put some text to recognize to what class the CAM belongs.
-            cv2.putText(
-                image,
-                text=f"{cls}",
-                org=(20, 20),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.5,
-                color=(255, 255, 255),
-                thickness=1,
+            misc.create_and_save_heatmap(
+                image_rgb, cam, label, save_dir, threshold=threshold
             )
+    elif os.path.exists(csv_path):
+        annotations_df = pd.read_csv(csv_path)
+        for index, row in annotations_df.iterrows():
+            image_raw = cv2.imread(row["Path"])
+            image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
+            scale_func = (
+                "dataset.scale_imagenet_np" if scale_func is None else scale_func
+            )
+            print(f"Using {scale_func} function to preprocess the image...")
+            image = misc.call_func_by_name(image_rgb, func=scale_func)
+            index = class_names.index(row["Label"])
+            annotations = {
+                "x1": row["x1"],
+                "x2": row["x2"],
+                "y1": row["y1"],
+                "y2": row["y2"],
+            }
 
-            cam_path = os.path.join(save_path, f"{cls}_cam.png")
-            cv2.imwrite(cam_path, image)
-            print(f"{cls} Class Activation Map saved to: {cam_path}")
+            [conv_outputs, predictions] = get_output(image)
+            conv_outputs = conv_outputs[0, ...]
+
+            cam = np.zeros(dtype=np.float32, shape=(conv_outputs.shape[:2]))
+            for i, w in enumerate(class_weights[index]):
+                cam += w * conv_outputs[:, :, i]
+            cam /= np.max(cam)
+            cam = cv2.resize(cam, (image_rgb.shape[:2]))
+            filename = os.path.splitext(row["Path"].split("/")[-1])[0]
+            misc.create_and_save_heatmap(
+                image_rgb,
+                cam,
+                row["Label"],
+                save_dir,
+                filename=filename,
+                threshold=threshold,
+                annotations=annotations,
+            )
     else:
-        raise FileNotFoundError("Image path doesn't exists")
-
+        raise FileNotFoundError("Could not find the image or CSV path.")
