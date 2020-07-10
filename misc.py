@@ -272,6 +272,43 @@ class HistoryPlotter(object):
 
 
 # ------------------------------------------------------------------------------------------------------
+# Image utilities
+
+
+def create_and_save_heatmap(
+    image, cam, label, save_dir, filename="", threshold=0.2, annotations=None
+):
+    heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
+    heatmap[np.where(cam < threshold)] = 0
+    heatmap_image = heatmap * 0.5 + image
+
+    cv2.putText(
+        heatmap_image,
+        text=label,
+        org=(5, 20),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=0.5,
+        color=(255, 255, 255),
+        thickness=1,
+    )
+
+    if annotations is not None:
+        cam_path = os.path.join(save_dir, f"{filename}_{label}.png")
+        cv2.rectangle(
+            img,
+            (annotations["x1"], annotations["y1"]),
+            (annotations["x2"], annotations["y2"]),
+            (255, 0, 0),
+            2,
+        )
+    else:
+        cam_path = os.path.join(save_dir, f"{label}_cam.png")
+
+    cv2.imwrite(cam_path, heatmap_image)
+    print(f"Class Activation Map saved to: {cam_path}")
+
+
+# ------------------------------------------------------------------------------------------------------
 # Model utilities
 
 
@@ -287,8 +324,18 @@ def is_composite_model(model):
     return False
 
 
+def get_layer_by_substring(model, substring):
+    layer_dict = {layer.name: layer for layer in model.layers}
+    for layer_name in layer_dict:
+        if substring in layer_name:
+            return layer_dict[layer_name]
+    raise Exception(
+        f"None of the layers from {model.name} have {substring} in their name"
+    )
+
+
 # ------------------------------------------------------------------------------------------------------
-# UMAP
+# Embeddings
 
 
 def umap_points(predictions):
@@ -305,97 +352,3 @@ def umap_points(predictions):
     umap_points = transformer.fit_transform(predictions)
 
     return transformer, umap_points
-
-
-# ------------------------------------------------------------------------------------------------------
-# Generate Markdown file at the end of execution
-
-
-def generate_md_file(
-    result_subdir,
-    class_names,
-    train_record,
-    valid_record,
-    network_1_dict,
-    dataset_dict,
-    training_dict,
-    callbacks_dict,
-    feature_dict,
-    network_2_dict=None,
-):
-    """Takes the dictionaries with the training configuration and generates a markdown file"""
-
-    exp_uid = result_subdir.split("-")[0]
-    md_filename = os.path.join(result_subdir, "README.md")
-    if network_2_dict is not None:
-        title = "Experiment {} - Train {}-{}".format(
-            exp_uid, network_1_dict.model_name, network_2_dict.model_name
-        )
-    else:
-        title = "Experiment {} - Train {}".format(exp_uid, network_1_dict.model_name)
-    md_file = mdutils.MdUtils(file_name=md_filename, title=title)
-    print("Saving experiment configuration to {}".format(md_filename))
-
-    # Introduction section
-    md_file.new_paragraph(
-        "In the following sections you will find a detailed description of the configuration "
-        "that was used at the time of the execution of this experiment for the multi-label "
-        "classification of the following diseases:"
-    )
-    md_file.new_list(items=class_names)
-
-    # Network section
-    md_file.new_header(level=1, title="Networks")
-    md_file.new_header(level=2, title="Network 1")
-    network_1_items = [
-        "Model name: {}".format(network_1_dict.model_name),
-        "Input shape: {}".format(network_1_dict.input_shape),
-        "All layers were frozen except the prediction layer"
-        if network_1_dict.freeze
-        else "No layers were frozen",
-    ]
-    md_file.new_list(items=network_1_items)
-
-    if network_2_dict is not None:
-        md_file.new_header(level=2, title="Network 2")
-        network_2_items = [
-            "Model name: {}".format(network_2_dict.model_name),
-            "Input shape: {}".format(network_2_dict.input_shape),
-            "All layers were frozen except the prediction layer"
-            if network_2_dict.freeze
-            else "No layers were frozen",
-        ]
-        md_file.new_list(items=network_2_items)
-
-    # Dataset section
-
-    ## Records subsection
-    md_file.new_header(level=1, title="Dataset")
-    md_file.new_paragraph(
-        "These were the `*.tfrecords` files and feature dictionary function used for training"
-        " and validation during the execution:"
-    )
-    record_items = [
-        "Training record: {}".format(train_record),
-        "Validation record: {}".format(valid_record),
-        "Feature dictionary function: {}".format(feature_dict.func),
-    ]
-    md_file.new_list(items=record_items)
-
-    ## Mapping functions
-    md_file.new_paragraph(
-        "Also, these were the functions used to process the data during training"
-    )
-    md_file.new_list(items=dataset_dict.map_functions)
-
-    # Training section
-    md_file.new_header(level=1, title="Training")
-    md_file.new_paragraph(
-        f"The training was carried out using {config.train.epochs} epochs and an initial learning"
-        f" rate of {config.train.epochs}. Also, there were some callbacks used to modify the learning"
-        " rate during training and save the model with the best AUC score. List of callbacks:"
-    )
-    md_file.new_list(items=list(callbacks_dict.keys()))
-
-    # Create Markdownfile
-    md_file.create_md_file()

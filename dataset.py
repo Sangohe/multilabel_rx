@@ -273,7 +273,7 @@ def label_smoothing_multiview(images, label):
 # NP Mapping functions
 
 
-def scale_imagenet_np(image):
+def preprocess_imagenet(image):
     """Takes a single image, resize it and scale its values using
     the imagenet mean and standard deviation
 
@@ -289,6 +289,21 @@ def scale_imagenet_np(image):
     image = cv2.resize(image, (224, 224))
     image = np.expand_dims(image, axis=0)
     image = (image - imagenet_mean) / imagenet_std
+
+    return image
+
+
+def preprocess_1_minus_1(image):
+    """Takes a single image, resize it and scale its values to [-1, 1]
+
+    Args:
+        image (array): numpy array containing the pixel values
+    """
+
+    image = image.astype(np.float32)
+    image = (image / 127.5) - 1.0
+    image = cv2.resize(image, (224, 224))
+    image = np.expand_dims(image, axis=0)
 
     return image
 
