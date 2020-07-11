@@ -481,10 +481,6 @@ def generate_cams(
     print(f"Logging output to {log_file}")
     misc.set_output_log_file(log_file)
 
-    save_dir = os.path.join(result_subdir, "cams", os.path.splitext(image_path)[0])
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
     print(f"Loading the pretrained Model from {model_path}")
     model = tf.keras.models.load_model(model_path)
 
@@ -496,6 +492,10 @@ def generate_cams(
     )
 
     if os.path.exists(image_path):
+        save_dir = os.path.join(result_subdir, "cams", os.path.splitext(image_path)[0])
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            
         image_raw = cv2.imread(image_path)
         image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)
         scale_func = "dataset.scale_imagenet_np" if scale_func is None else scale_func
@@ -519,6 +519,9 @@ def generate_cams(
             )
     elif os.path.exists(csv_path):
         annotations_df = pd.read_csv(csv_path)
+        save_dir = os.path.join(result_subdir, "cams", os.path.splitext(csv_path.split("/")[-1])[0])
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
         for index, row in annotations_df.iterrows():
             image_raw = cv2.imread(row["Path"])
             image_rgb = cv2.cvtColor(image_raw, cv2.COLOR_BGR2RGB)

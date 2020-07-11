@@ -1,5 +1,6 @@
 import os
 import sys
+import cv2
 import glob
 import mdutils
 import importlib
@@ -295,9 +296,9 @@ def create_and_save_heatmap(
     if annotations is not None:
         cam_path = os.path.join(save_dir, f"{filename}_{label}.png")
         cv2.rectangle(
-            img,
-            (annotations["x1"], annotations["y1"]),
-            (annotations["x2"], annotations["y2"]),
+            heatmap_image,
+            (int(annotations["x1"]), int(annotations["y1"])),
+            (int(annotations["x2"]), int(annotations["y2"])),
             (255, 0, 0),
             2,
         )
